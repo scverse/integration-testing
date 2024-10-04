@@ -15,9 +15,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
-  
+  test:  
     strategy:
       fail-fast: false
       matrix:
@@ -28,6 +26,8 @@ jobs:
     defaults:
       run:
         shell: bash -el {0}
+
+    runs-on: ${{ matrix.os }}
 
     steps:
       - uses: actions/checkout@v3
