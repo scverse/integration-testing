@@ -1,0 +1,50 @@
+name: Integration test
+
+on:
+  nightly:
+    schedule:
+      - cron: "0 0 * * *"
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+  
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            python: ["3.10", "3.12"]
+            package: ["mudata", "spatialdata", "scirpy", "muon", "scanpy"]
+
+    defaults:
+      run:
+        shell: bash -el {0}
+
+    steps:
+      - uses: actions/checkout@v3
+        repository: scverse/${{ matrix.package }}
+  
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Install UV
+        uses: hynek/setup-cached-uv@v2
+
+      - name: Install AnnData + test dep
+        run: |
+          uv pip install --system . git+https://github.com/scverse/anndata pytest-xdist
+
+      - name: Env list
+        run: uv pip freeze
+
+      - name: Run test
+        run: pytest -n auto
