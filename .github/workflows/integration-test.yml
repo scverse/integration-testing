@@ -19,7 +19,6 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ubuntu-latest
         python: ["3.10", "3.12"]
         package: ["mudata"] # , "spatialdata", "scirpy", "muon", "scanpy"
 
@@ -27,7 +26,7 @@ jobs:
       run:
         shell: bash -el {0}
 
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v3
