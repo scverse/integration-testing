@@ -20,7 +20,7 @@ jobs:
       fail-fast: false
       matrix:
         python: ["3.10", "3.12"]
-        package: ["mudata", "spatialdata", "scirpy", "muon", "scanpy", "squidpy"]
+        package: ["mudata", "spatialdata", "scirpy", "muon", "scanpy", "squidpy", "scvi-tools"]
 
     defaults:
       run:
@@ -43,7 +43,7 @@ jobs:
 
       - name: Install AnnData + test dep
         run: |
-          printf "numba>=0.60.0" | tee /tmp/constraints.txt
+          printf "numba>=0.60.0\nnumpy<2.0" | tee /tmp/constraints.txt
           uv pip install --compile --system ".[test]" pytest-xdist -c /tmp/constraints.txt -v 
           uv pip install --compile --system git+https://github.com/scverse/anndata 
       - name: Env list
