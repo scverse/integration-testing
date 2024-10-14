@@ -43,7 +43,7 @@ jobs:
 
       - name: Install AnnData + test dep
         run: |
-          uv pip install --compile --system ".[test]" pytest-xdist "llvmlite>=0.60.0" -v
+          uv pip install --compile --system ".[test]" pytest-xdist "llvmlite>=0.43dev0"
           uv pip install --compile --system git+https://github.com/scverse/anndata 
       - name: Env list
         run: uv pip freeze
