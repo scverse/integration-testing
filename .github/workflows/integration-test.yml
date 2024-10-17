@@ -54,11 +54,11 @@ jobs:
           echo "failure=true" >> $GITHUB_ENV
 
       - name: Env list
-        if: env.failure != 'true'
+        if: ${{ env.failure != 'true' }}
         run: uv pip freeze
 
       - name: Run test
-        if: env.failure != 'true'
+        if: ${{ env.failure != 'true' }}
         run: pytest
         continue-on-error: true
 
@@ -84,7 +84,7 @@ jobs:
           fi
 
       - name: Report failure issue
-        if: ${{ failure() }}' && env.issue_exists == 'false' # && github.event_name == 'schedule'
+        if: ${{ failure() }} && env.issue_exists == 'false' # && github.event_name == 'schedule'
         run: |
           ISSUE_BODY="The daily CI ${failure_type} for ${{ matrix.package }} failed."
           gh issue create --repo scverse/${{ matrix.package }} --title "${env.issue_title}" --body "${ISSUE_BODY}"
