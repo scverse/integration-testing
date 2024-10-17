@@ -50,14 +50,13 @@ jobs:
         run: |
           echo "Installation failed for ${{ matrix.package }}"
           echo "failure_type=install" >> $GITHUB_ENV
-          echo "failure=true" >> $GITHUB_ENV
 
       - name: Env list
-        if: ${{ env.failure != 'true' }}
+        if: ${{ success() }}
         run: uv pip freeze
 
       - name: Run test
-        if: ${{ env.failure != 'true' }}
+        if: ${{ success() }}
         run: pytest
 
       - name: Set failure type for test
@@ -65,7 +64,6 @@ jobs:
         run: |
           echo "Test failed for ${{ matrix.package }}"
           echo "failure_type=test" >> $GITHUB_ENV
-          echo "failure=true" >> $GITHUB_ENV
     
       - name: Check if failure issue already exists
         if: ${{ failure() }} # && github.event_name == 'schedule'
