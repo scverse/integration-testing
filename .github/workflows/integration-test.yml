@@ -50,32 +50,31 @@ jobs:
           uv pip install --compile --system git+https://github.com/scverse/anndata
 
       - name: Set failure type for install
-        if: ${{ failure() }}
+        if: failure()
         run: |
           echo "Installation failed for ${{ matrix.package }}"
           echo "failure_type=install" >> $GITHUB_ENV
 
       - name: Env list
-        if: ${{ success() }}
         run: uv pip freeze
 
       - name: Run test
-        if: ${{ success() }}
         run: pytest
 
       - name: Set failure type for test
-        if: ${{ failure() && env.failure_type != 'install' }}
+        if: failure() && env.failure_type != 'install'
         run: |
           echo "Test failed for ${{ matrix.package }}"
           echo "failure_type=test" >> $GITHUB_ENV
     
       - name: Check if failure issue already exists
-        if: ${{ failure() }} # && github.event_name == 'schedule'
+        if: failure() # && github.event_name == 'schedule'
         id: find_issue
         run: |
           ISSUE_TITLE="Daily CI ${failure_type^} Failure - ${{ matrix.package }}"
           echo "Checking for existing issue: $ISSUE_TITLE"
-          if gh issue list --repo scverse/${{ matrix.package }} --state open --json title --jq '.[] | select(.title == "'"${ISSUE_TITLE}"'")'; then
+          ISSUE_COUNT=$(gh issue list --repo scverse/${{ matrix.package }} --state open --search "${ISSUE_TITLE}" --json number --jq 'length')
+          if [[ "$ISSUE_COUNT" -gt 0 ]]; then
             echo "${failure_type^} failure issue already exists for today."
             echo "issue_exists=true" >> $GITHUB_ENV
           else
@@ -84,8 +83,7 @@ jobs:
           fi
 
       - name: Report failure issue
-        if: ${{ failure() }} && env.issue_exists == 'false' # && github.event_name == 'schedule'
+        if: failure() && env.issue_exists == 'false' # && github.event_name == 'schedule'
         run: |
           ISSUE_BODY="The daily CI ${failure_type} for ${{ matrix.package }} failed."
-          ISSUE_TITLE=${{ env.issue_title }}
-          gh issue create --repo scverse/${{ matrix.package }} --title "${ISSUE_TITLE}" --body "${ISSUE_BODY}"
+          gh issue create --repo scverse/${{ matrix.package }} --title "${{ env.issue_title }}" --body "${ISSUE_BODY}"
