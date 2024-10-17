@@ -55,9 +55,9 @@ jobs:
 
       - name: Install AnnData + test dep
         run: |
-          cd $GITHUB_WORKSPACE/${{ matrix.package }}
           uv pip install --compile --system ".[test]" -c ../integration-testing/constraints.txt -v 
           uv pip install --compile --system git+https://github.com/scverse/anndata
+        working-directory: ${{ matrix.package }}
 
       - name: Set failure type for install
         if: failure()
@@ -70,8 +70,8 @@ jobs:
 
       - name: Run test
         run: |
-          cd $GITHUB_WORKSPACE/${{ matrix.package }}
           pytest
+        working-directory: ${{ matrix.package }}
 
       - name: Set failure type for test
         if: failure() && env.failure_type != 'install'
