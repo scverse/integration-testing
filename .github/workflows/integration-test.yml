@@ -45,8 +45,7 @@ jobs:
 
       - name: Install AnnData + test dep
         run: |
-          printf "numba>=0.60.0\nnumpy<2.0" | tee /tmp/constraints.txt
-          uv pip install --compile --system ".[test]" -c /tmp/constraints.txt -v 
+          uv pip install --compile --system ".[test]" -c ./constraints.txt -v 
           uv pip install --compile --system git+https://github.com/scverse/anndata
 
       - name: Set failure type for install
