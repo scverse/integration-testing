@@ -27,13 +27,16 @@ jobs:
     runs-on: ubuntu-latest
   
     env:
+      # This env variable is used by the `gh` CLI
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           repository: scverse/${{ matrix.package }}
+          fetch-depth: 0
+          filter: blob:none
   
       - name: Install Python
         uses: actions/setup-python@v5
@@ -66,7 +69,7 @@ jobs:
           echo "Test failed for ${{ matrix.package }}"
           echo "failure_type=test" >> $GITHUB_ENV
     
-      - name: Check if failure issue already exists
+      - name: Check for open failure issue
         if: failure() && github.event_name == 'schedule'
         id: find_issue
         run: |
@@ -85,5 +88,5 @@ jobs:
         if: failure() && env.issue_exists == 'false' && github.event_name == 'schedule'
         run: |
           RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-          ISSUE_BODY="The daily CI failed on ${failure_type} for ${{ matrix.package }} failed.  Please go to [the logs of the integration testing repo](${RUN_URL}) to review. @flying-sheep @ilan-gold"
+          ISSUE_BODY="The daily CI failed on ${failure_type} for ${{ matrix.package }} failed.  Please go to [the logs of the integration testing repo](${RUN_URL}) to review. @scverse/anndata"
           gh issue create --repo scverse/${{ matrix.package }} --title "${{ env.issue_title }}" --body "${ISSUE_BODY}"
