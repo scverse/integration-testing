@@ -71,7 +71,7 @@ jobs:
         if: failure() # && github.event_name == 'schedule'
         id: find_issue
         run: |
-          ISSUE_TITLE="Daily CI ${failure_type^} Failure on ${{ matrix.python }} - ${{ matrix.package }}"
+          ISSUE_TITLE="Daily CI ${failure_type^} Failure on python ${{ matrix.python }} - ${{ matrix.package }}"
           echo "Checking for existing issue: $ISSUE_TITLE"
           ISSUE_COUNT=$(gh issue list --repo scverse/${{ matrix.package }} --state open --search "${ISSUE_TITLE}" --json number --jq 'length')
           if [[ "$ISSUE_COUNT" -gt 0 ]]; then
