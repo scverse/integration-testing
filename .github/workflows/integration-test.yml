@@ -55,6 +55,7 @@ jobs:
 
       - name: Install AnnData + test dep
         run: |
+          cd $GITHUB_WORKSPACE/${{ matrix.package }}
           uv pip install --compile --system ".[test]" -c ../integration-testing/constraints.txt -v 
           uv pip install --compile --system git+https://github.com/scverse/anndata
 
@@ -68,7 +69,9 @@ jobs:
         run: uv pip freeze
 
       - name: Run test
-        run: pytest
+        run: |
+          cd $GITHUB_WORKSPACE/${{ matrix.package }}
+          pytest
 
       - name: Set failure type for test
         if: failure() && env.failure_type != 'install'
