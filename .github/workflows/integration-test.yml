@@ -54,11 +54,11 @@ jobs:
           echo "failure=true" >> $GITHUB_ENV
 
       - name: Env list
-        if: success()
+        if: env.failure != 'true'
         run: uv pip freeze
 
       - name: Run test
-        if: success()
+        if: env.failure != 'true'
         run: pytest
         continue-on-error: true
 
