@@ -18,7 +18,7 @@ jobs:
       fail-fast: false
       matrix:
         python: ["3.10", "3.12"]
-        package: ["integration-testing"] # ["mudata", "spatialdata", "scirpy", "muon", "scanpy", "squidpy", "scvi-tools"]
+        package: ["mudata", "spatialdata", "scirpy", "muon", "scanpy", "squidpy", "scvi-tools"]
 
     defaults:
       run:
@@ -68,7 +68,7 @@ jobs:
           echo "failure_type=test" >> $GITHUB_ENV
     
       - name: Check if failure issue already exists
-        if: failure() # && github.event_name == 'schedule'
+        if: failure() && github.event_name == 'schedule'
         id: find_issue
         run: |
           ISSUE_TITLE="Daily CI ${failure_type^} Failure on python ${{ matrix.python }} - ${{ matrix.package }}"
@@ -83,8 +83,8 @@ jobs:
           fi
 
       - name: Report failure issue
-        if: failure() && env.issue_exists == 'false' # && github.event_name == 'schedule'
+        if: failure() && env.issue_exists == 'false' && github.event_name == 'schedule'
         run: |
           RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-          ISSUE_BODY="The daily CI failed on ${failure_type} for ${{ matrix.package }} failed.  Please go to [the logs of the integration testing repo](${RUN_URL}) to review."
+          ISSUE_BODY="The daily CI failed on ${failure_type} for ${{ matrix.package }} failed.  Please go to [the logs of the integration testing repo](${RUN_URL}) to review. @flying-sheep @ilan-gold"
           gh issue create --repo scverse/${{ matrix.package }} --title "${{ env.issue_title }}" --body "${ISSUE_BODY}"
