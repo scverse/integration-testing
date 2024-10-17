@@ -61,7 +61,7 @@ jobs:
         run: pytest
 
       - name: Set failure type for test
-        if: ${{ failure() }}
+        if: ${{ failure() && env.failure_type != 'install' }}
         run: |
           echo "Test failed for ${{ matrix.package }}"
           echo "failure_type=test" >> $GITHUB_ENV
