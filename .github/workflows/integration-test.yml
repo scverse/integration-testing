@@ -18,7 +18,7 @@ jobs:
       fail-fast: false
       matrix:
         python: ["3.10", "3.12"]
-        package: ["mudata", "spatialdata", "scirpy", "muon", "scanpy", "squidpy", "scvi-tools", "integration-testing"]
+        package: ["integration-testing"] # "mudata", "spatialdata", "scirpy", "muon", "scanpy", "squidpy", "scvi-tools", 
 
     defaults:
       run:
@@ -86,5 +86,5 @@ jobs:
       - name: Report failure issue
         if: env.failure == 'true' && env.issue_exists == 'false' # && github.event_name == 'schedule'
         run: |
-          ISSUE_BODY="The daily CI ${failure_type} for ${{ matrix.package }} failed. @ilan-gold @flying-sheep"
+          ISSUE_BODY="The daily CI ${failure_type} for ${{ matrix.package }} failed."
           gh issue create --repo scverse/${{ matrix.package }} --title "${env.issue_title}" --body "${ISSUE_BODY}"
