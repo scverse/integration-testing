@@ -75,7 +75,7 @@ jobs:
         run: |
           ISSUE_TITLE="Daily CI ${failure_type^} Failure - ${{ matrix.package }}"
           echo "Checking for existing issue: $ISSUE_TITLE"
-          if gh issue list --repo scverse/${{ matrix.package }} --label "failure" --state open --json title --jq '.[] | select(.title == "'"${ISSUE_TITLE}"'")'; then
+          if gh issue list --repo scverse/${{ matrix.package }} --state open --json title --jq '.[] | select(.title == "'"${ISSUE_TITLE}"'")'; then
             echo "${failure_type^} failure issue already exists for today."
             echo "issue_exists=true" >> $GITHUB_ENV
           else
@@ -87,4 +87,4 @@ jobs:
         if: env.failure == 'true' && env.issue_exists == 'false' # && github.event_name == 'schedule'
         run: |
           ISSUE_BODY="The daily CI ${failure_type} for ${{ matrix.package }} failed. @ilan-gold @flying-sheep"
-          gh issue create --repo scverse/${{ matrix.package }} --title "${env.issue_title}" --body "${ISSUE_BODY}" --label "failure"
+          gh issue create --repo scverse/${{ matrix.package }} --title "${env.issue_title}" --body "${ISSUE_BODY}"
