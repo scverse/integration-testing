@@ -44,7 +44,6 @@ jobs:
           printf "numba>=0.60.0\nnumpy<2.0" | tee /tmp/constraints.txt
           uv pip install --compile --system ".[test]" -c /tmp/constraints.txt -v 
           uv pip install --compile --system git+https://github.com/scverse/anndata
-        continue-on-error: true
 
       - name: Set failure type for install
         if: ${{ failure() }}
@@ -60,7 +59,6 @@ jobs:
       - name: Run test
         if: ${{ env.failure != 'true' }}
         run: pytest
-        continue-on-error: true
 
       - name: Set failure type for test
         if: ${{ failure() }}
