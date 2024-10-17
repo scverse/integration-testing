@@ -55,8 +55,7 @@ jobs:
 
       - name: Install AnnData + test dep
         run: |
-          uv pip install --compile --system ".[test]" -c ../integration-testing/constraints.txt -v 
-          uv pip install --compile --system git+https://github.com/scverse/anndata
+          uv pip install --compile --system ".[test]" git+https://github.com/scverse/anndata -c ../integration-testing/constraints.txt -v 
         working-directory: ${{ matrix.package }}
 
       - name: Set failure type for install

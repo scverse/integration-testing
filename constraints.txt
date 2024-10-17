@@ -1,2 +1,2 @@
+# uv backtracking is broken
 numba>=0.60.0
-numpy<2.0
