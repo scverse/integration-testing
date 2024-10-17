@@ -85,5 +85,5 @@ jobs:
       - name: Report failure issue
         if: failure() && env.issue_exists == 'false' # && github.event_name == 'schedule'
         run: |
-          ISSUE_BODY="The daily CI failed on ${failure_type} for ${{ matrix.package }} failed.  Please go to [the integration testing repo](https://github.com/scverse/integration-testing/actions) to review."
+          ISSUE_BODY="The daily CI failed on ${failure_type} for ${{ matrix.package }} failed.  Please go to [the logs of the integration testing repo](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) to review."
           gh issue create --repo scverse/${{ matrix.package }} --title "${{ env.issue_title }}" --body "${ISSUE_BODY}"
