@@ -87,4 +87,4 @@ jobs:
         if: ${{ failure() }} && env.issue_exists == 'false' # && github.event_name == 'schedule'
         run: |
           ISSUE_BODY="The daily CI ${failure_type} for ${{ matrix.package }} failed."
-          gh issue create --repo scverse/${{ matrix.package }} --title "${issue_title}" --body "${ISSUE_BODY}"
+          gh issue create --repo scverse/${{ matrix.package }} --title "${{ env.issue_title }}" --body "${ISSUE_BODY}"
