@@ -2,25 +2,23 @@ name: Integration test
 
 on:
   schedule:
-    - cron: "0 0 * * *"
+    - cron: "0 0 * * *"  # Run daily at midnight UTC
   push:
     branches: [main]
   pull_request:
     branches: [main]
 
-# Cancel the job if new commits are pushed
-# https://stackoverflow.com/questions/66335225/how-to-cancel-previous-runs-in-the-pr-when-you-push-new-commitsupdate-the-curre
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
-  test:  
+  test:
     strategy:
       fail-fast: false
       matrix:
         python: ["3.10", "3.12"]
-        package: ["mudata", "spatialdata", "scirpy", "muon", "scanpy", "squidpy", "scvi-tools"]
+        package: ["mudata", "spatialdata", "scirpy", "muon", "scanpy", "squidpy", "scvi-tools", "integration-testing"]
 
     defaults:
       run:
@@ -45,10 +43,48 @@ jobs:
         run: |
           printf "numba>=0.60.0\nnumpy<2.0" | tee /tmp/constraints.txt
           uv pip install --compile --system ".[test]" -c /tmp/constraints.txt -v 
-          uv pip install --compile --system git+https://github.com/scverse/anndata 
+          uv pip install --compile --system git+https://github.com/scverse/anndata
+        continue-on-error: true
+
+      - name: Set failure type for install
+        if: failure()
+        run: |
+          echo "Installation failed for ${{ matrix.package }}"
+          echo "failure_type=install" >> $GITHUB_ENV
+          echo "failure=true" >> $GITHUB_ENV
 
       - name: Env list
+        if: success()
         run: uv pip freeze
 
       - name: Run test
+        if: success()
         run: pytest
+        continue-on-error: true
+
+      - name: Set failure type for test
+        if: failure()
+        run: |
+          echo "Test failed for ${{ matrix.package }}"
+          echo "failure_type=test" >> $GITHUB_ENV
+          echo "failure=true" >> $GITHUB_ENV
+    
+      - name: Check if failure issue already exists
+        if: env.failure == 'true' # && github.event_name == 'schedule'
+        id: find_issue
+        run: |
+          ISSUE_TITLE="Daily CI ${failure_type^} Failure - ${{ matrix.package }}"
+          echo "Checking for existing issue: $ISSUE_TITLE"
+          if gh issue list --repo scverse/${{ matrix.package }} --label "failure" --state open --json title --jq '.[] | select(.title == "'"${ISSUE_TITLE}"'")'; then
+            echo "${failure_type^} failure issue already exists for today."
+            echo "issue_exists=true" >> $GITHUB_ENV
+          else
+            echo "issue_exists=false" >> $GITHUB_ENV
+            echo "issue_title=ISSUE_TITLE" >> $GITHUB_ENV
+          fi
+
+      - name: Report failure issue
+        if: env.failure == 'true' && env.issue_exists == 'false' # && github.event_name == 'schedule'
+        run: |
+          ISSUE_BODY="The daily CI ${failure_type} for ${{ matrix.package }} failed. @ilan-gold @flying-sheep"
+          gh issue create --repo scverse/${{ matrix.package }} --title "${env.issue_title}" --body "${ISSUE_BODY}" --label "failure"
