@@ -76,7 +76,7 @@ jobs:
             echo "issue_exists=true" >> $GITHUB_ENV
           else
             echo "issue_exists=false" >> $GITHUB_ENV
-            echo "issue_title=ISSUE_TITLE" >> $GITHUB_ENV
+            echo "issue_title=$ISSUE_TITLE" >> $GITHUB_ENV
           fi
 
       - name: Report failure issue
