@@ -1,0 +1,3 @@
+# uv backtracking is broken so we need to lower bound these
+numba>=0.60.0
+mofapy2>=0.7.1
