@@ -94,7 +94,7 @@ jobs:
           fi
 
       - name: Report failure issue
-        if: failure() && env.issue_exists == 'false'
+        if: failure() && env.issue_exists == 'false' && github.event_name == 'schedule'
         run: |
           RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           ISSUE_BODY="The daily CI failed on ${failure_type} for ${{ matrix.package }} failed.  Please go to [the logs of the integration testing repo](${RUN_URL}) to review. @scverse/anndata"
