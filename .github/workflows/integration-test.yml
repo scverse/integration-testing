@@ -99,3 +99,12 @@ jobs:
           RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           ISSUE_BODY="The daily CI failed on ${failure_type} for ${{ matrix.package }} failed.  Please go to [the logs of the integration testing repo](${RUN_URL}) to review. @scverse/anndata"
           gh issue create --repo scverse/${{ matrix.package }} --title "${{ env.issue_title }}" --body "${ISSUE_BODY}"
+
+  keepalive-job:
+    name: Keepalive Workflow
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: gautamkrishnar/keepalive-workflow@v2
