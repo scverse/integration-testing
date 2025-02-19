@@ -17,7 +17,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python: ["3.10", "3.12"]
+        python: ["3.11", "3.12"]
         package: ["mudata", "spatialdata", "scirpy", "muon", "scanpy", "squidpy", "scvi-tools"]
 
     defaults:
