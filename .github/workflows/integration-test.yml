@@ -106,4 +106,10 @@ jobs:
     permissions:
       actions: write
     steps:
-      - uses: liskin/gh-workflow-keepalive@v1.2.1
+      - name: Re-enable workflow
+        env:
+          GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN || github.token }}
+        shell: sh
+        run: |
+          workflow="${workflow#${GITHUB_REPOSITORY}/.github/workflows/}"
+          gh api -X PUT "repos/${GITHUB_REPOSITORY}/actions/workflows/${workflow}/enable"
