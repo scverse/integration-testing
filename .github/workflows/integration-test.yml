@@ -111,5 +111,6 @@ jobs:
           GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN || github.token }}
         shell: sh
         run: |
+          workflow="${GITHUB_WORKFLOW_REF%%@*}"
           workflow="${workflow#${GITHUB_REPOSITORY}/.github/workflows/}"
           gh api -X PUT "repos/${GITHUB_REPOSITORY}/actions/workflows/${workflow}/enable"
