@@ -18,7 +18,7 @@ jobs:
       fail-fast: false
       matrix:
         python: ["3.11", "3.12"]
-        package: ["mudata", "spatialdata", "scirpy", "muon", "scanpy", "squidpy", "scvi-tools"]
+        package: ["mudata", "spatialdata", "scirpy", "muon", "scanpy", "squidpy", "scvi-tools", "pertpy"]
 
     defaults:
       run:
