@@ -18,17 +18,17 @@ jobs:
       fail-fast: false
       matrix:
         python: ["3.11", "3.12"]
-        include:
-          - package: "mudata"
-          - package: "spatialdata"
-          - package: "scirpy"
-          - package: "muon"
-          - package: "scanpy"
-          - package: "squidpy"
-          - package: "scvi-tools"
-          - package: "pertpy"
-            extras: "de"
-          - package: "decoupler"
+        package:
+        - name: "mudata"
+        - name: "spatialdata" 
+        - name: "scirpy"
+        - name: "muon"
+        - name: "scanpy"
+        - name: "squidpy"
+        - name: "scvi-tools"
+        - name: "pertpy"
+          extras: "de"
+        - name: "decoupler"
 
     defaults:
       run:
@@ -65,10 +65,7 @@ jobs:
 
       - name: Install AnnData and scverse package
         run: |
-          PACKAGE_SPEC="${{ matrix.package }}"
-          if [ -n "${{ matrix.extras }}" ]; then
-            PACKAGE_SPEC="${{ matrix.package }}[${{ matrix.extras }}]"
-          fi
+          PACKAGE_SPEC="${{ matrix.package.name }}${{ matrix.package.extras && format('[{0}]', matrix.package.extras) || '' }}"
           uv pip install --compile --system ".[test]" git+https://github.com/scverse/anndata -c ../integration-testing/constraints.txt "$PACKAGE_SPEC" -v
         working-directory: ${{ matrix.package }}
 
