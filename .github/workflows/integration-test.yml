@@ -19,15 +19,15 @@ jobs:
       matrix:
         python: ["3.11", "3.12"]
         package:
-        - {name: mudata}
-        - {name: spatialdata}
-        - {name: scirpy}
-        - {name: muon}
-        - {name: scanpy}
-        - {name: squidpy}
-        - {name: "scvi-tools"}
-        - {name: pertpy, extras: de}
-        - {name: decoupler}
+          - {name: "mudata", extras: ""}
+          - {name: "spatialdata", extras: ""}
+          - {name: "scirpy", extras: ""}
+          - {name: "muon", extras: ""}
+          - {name: "scanpy", extras: ""}
+          - {name: "squidpy", extras: ""}
+          - {name: "scvi-tools", extras: ""}
+          - {name: "pertpy", extras: "de"}
+          - {name: "decoupler", extras: ""}
 
     defaults:
       run:
@@ -64,7 +64,11 @@ jobs:
 
       - name: Install AnnData and scverse package
         run: |
-          PACKAGE_SPEC="${{ matrix.package.name }}$([ -n "${{ matrix.package.extras }}" ] && echo "[${{ matrix.package.extras }}]")"
+          if [ -n "${{ matrix.package.extras }}" ]; then
+            PACKAGE_SPEC="${{ matrix.package.name }}[${{ matrix.package.extras }}]"
+          else
+            PACKAGE_SPEC="${{ matrix.package.name }}"
+          fi
           uv pip install --compile --system ".[test]" git+https://github.com/scverse/anndata -c ../integration-testing/constraints.txt "$PACKAGE_SPEC" -v
         working-directory: ${{ matrix.package.name }}
 
