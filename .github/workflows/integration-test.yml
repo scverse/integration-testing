@@ -18,7 +18,17 @@ jobs:
       fail-fast: false
       matrix:
         python: ["3.11", "3.12"]
-        package: ["mudata", "spatialdata", "scirpy", "muon", "scanpy", "squidpy", "scvi-tools", "pertpy"]
+        include:
+          - package: "mudata"
+          - package: "spatialdata"
+          - package: "scirpy"
+          - package: "muon"
+          - package: "scanpy"
+          - package: "squidpy"
+          - package: "scvi-tools"
+          - package: "pertpy"
+            extras: "de"
+          - package: "decoupler"
 
     defaults:
       run:
@@ -53,9 +63,13 @@ jobs:
       - name: Install UV
         uses: hynek/setup-cached-uv@v2
 
-      - name: Install AnnData + test dep
+      - name: Install AnnData and scverse package
         run: |
-          uv pip install --compile --system ".[test]" git+https://github.com/scverse/anndata -c ../integration-testing/constraints.txt -v 
+          PACKAGE_SPEC="${{ matrix.package }}"
+          if [ -n "${{ matrix.extras }}" ]; then
+            PACKAGE_SPEC="${{ matrix.package }}[${{ matrix.extras }}]"
+          fi
+          uv pip install --compile --system ".[test]" git+https://github.com/scverse/anndata -c ../integration-testing/constraints.txt "$PACKAGE_SPEC" -v
         working-directory: ${{ matrix.package }}
 
       - name: Set failure type for install
