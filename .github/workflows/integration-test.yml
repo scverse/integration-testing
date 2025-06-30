@@ -52,6 +52,10 @@ jobs:
 
       - name: Install UV
         uses: hynek/setup-cached-uv@v2
+      
+      # For snapatac2
+      - name: Install rust-cache
+        uses: Swatinem/rust-cache@v2
 
       - name: Install AnnData + test dep
         run: |
