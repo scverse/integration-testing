@@ -19,6 +19,7 @@ jobs:
       matrix:
         python: ["3.11", "3.12"]
         package:
+          # extras should be a comma seperated list of strings, like `extras: "lazy,accelerated"`
           - {name: "mudata", extras: ""}
           - {name: "spatialdata", extras: ""}
           - {name: "scirpy", extras: ""}
