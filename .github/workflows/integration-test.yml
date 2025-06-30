@@ -57,7 +57,7 @@ jobs:
         run: |
           cd snapatac2-python
           uv pip install --compile --system ".[test]" -c ../../integration-testing/constraints.txt -v
-          uv pip install git+https://github.com/scverse/anndata -v
+          uv pip install --system git+https://github.com/scverse/anndata -v
           cd ..
         working-directory: ${{ matrix.package }}
 
