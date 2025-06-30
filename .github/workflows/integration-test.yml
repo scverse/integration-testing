@@ -18,7 +18,18 @@ jobs:
       fail-fast: false
       matrix:
         python: ["3.11", "3.12"]
-        package: ["mudata", "spatialdata", "scirpy", "muon", "scanpy", "squidpy", "scvi-tools"]
+        package:
+          # extras should be a comma seperated list of strings, like `extras: "lazy,accelerated"`
+          # The 'test' extra is always installed
+          - {name: "mudata", extras: ""}
+          - {name: "spatialdata", extras: ""}
+          - {name: "scirpy", extras: ""}
+          - {name: "muon", extras: ""}
+          - {name: "scanpy", extras: ""}
+          - {name: "squidpy", extras: ""}
+          - {name: "scvi-tools", extras: ""}
+          - {name: "pertpy", extras: "de"}
+          - {name: "decoupler", extras: ""}
 
     defaults:
       run:
@@ -40,10 +51,10 @@ jobs:
 
       - uses: actions/checkout@v4
         with:
-          repository: scverse/${{ matrix.package }}
+          repository: scverse/${{ matrix.package.name }}
           fetch-depth: 0
           filter: blob:none
-          path: ${{ matrix.package }}
+          path: ${{ matrix.package.name }}
   
       - name: Install Python
         uses: actions/setup-python@v5
@@ -53,15 +64,19 @@ jobs:
       - name: Install UV
         uses: hynek/setup-cached-uv@v2
 
-      - name: Install AnnData + test dep
+      - name: Install AnnData and scverse package
         run: |
-          uv pip install --compile --system ".[test]" git+https://github.com/scverse/anndata -c ../integration-testing/constraints.txt -v 
-        working-directory: ${{ matrix.package }}
+          EXTRAS="test"
+          if [ -n "${{ matrix.package.extras }}" ]; then
+            EXTRAS="$EXTRAS,${{ matrix.package.extras }}"
+          fi
+          uv pip install --compile --system ".[$EXTRAS]" git+https://github.com/scverse/anndata -c ../integration-testing/constraints.txt -v
+        working-directory: ${{ matrix.package.name }}
 
       - name: Set failure type for install
         if: failure()
         run: |
-          echo "Installation failed for ${{ matrix.package }}"
+          echo "Installation failed for ${{ matrix.package.name }}"
           echo "failure_type=install" >> $GITHUB_ENV
 
       - name: Env list
@@ -70,12 +85,12 @@ jobs:
       - name: Run test
         run: |
           pytest
-        working-directory: ${{ matrix.package }}
+        working-directory: ${{ matrix.package.name }}
 
       - name: Set failure type for test
         if: failure() && env.failure_type != 'install'
         run: |
-          echo "Test failed for ${{ matrix.package }}"
+          echo "Test failed for ${{ matrix.package.name }}"
           echo "failure_type=test" >> $GITHUB_ENV
     
       - name: Check for open failure issue
@@ -84,7 +99,7 @@ jobs:
         run: |
           ISSUE_TITLE="Integration Testing CI ${failure_type^} Failure on python ${{ matrix.python }}"
           echo "Checking for existing issue: $ISSUE_TITLE"
-          ISSUE_COUNT=$(gh issue list --repo scverse/${{ matrix.package }} --state open --search "${ISSUE_TITLE}" --json number --jq 'length')
+          ISSUE_COUNT=$(gh issue list --repo scverse/${{ matrix.package.name }} --state open --search "${ISSUE_TITLE}" --json number --jq 'length')
           if [[ "$ISSUE_COUNT" -gt 0 ]]; then
             echo "${failure_type^} failure issue already exists for today."
             echo "issue_exists=true" >> $GITHUB_ENV
@@ -97,8 +112,8 @@ jobs:
         if: failure() && env.issue_exists == 'false' && github.event_name == 'schedule'
         run: |
           RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-          ISSUE_BODY="The daily CI failed on ${failure_type} for ${{ matrix.package }} failed.  Please go to [the logs of the integration testing repo](${RUN_URL}) to review. @scverse/anndata"
-          gh issue create --repo scverse/${{ matrix.package }} --title "${{ env.issue_title }}" --body "${ISSUE_BODY}"
+          ISSUE_BODY="The daily CI failed on ${failure_type} for ${{ matrix.package.name }} failed.  Please go to [the logs of the integration testing repo](${RUN_URL}) to review. @scverse/anndata"
+          gh issue create --repo scverse/${{ matrix.package.name }} --title "${{ env.issue_title }}" --body "${ISSUE_BODY}"
 
   keepalive-job:
     name: Keepalive Workflow
