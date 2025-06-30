@@ -20,6 +20,7 @@ jobs:
         python: ["3.11", "3.12"]
         package:
           # extras should be a comma seperated list of strings, like `extras: "lazy,accelerated"`
+          # The 'test' extra is always installed
           - {name: "mudata", extras: ""}
           - {name: "spatialdata", extras: ""}
           - {name: "scirpy", extras: ""}
@@ -65,12 +66,11 @@ jobs:
 
       - name: Install AnnData and scverse package
         run: |
+          EXTRAS="test"
           if [ -n "${{ matrix.package.extras }}" ]; then
-            PACKAGE_SPEC="${{ matrix.package.name }}[${{ matrix.package.extras }}]"
-          else
-            PACKAGE_SPEC="${{ matrix.package.name }}"
+            EXTRAS="$EXTRAS,${{ matrix.package.extras }}"
           fi
-          uv pip install --compile --system ".[test]" git+https://github.com/scverse/anndata -c ../integration-testing/constraints.txt "$PACKAGE_SPEC" -v
+          uv pip install --compile --system ".[$EXTRAS]" git+https://github.com/scverse/anndata -c ../integration-testing/constraints.txt -v
         working-directory: ${{ matrix.package.name }}
 
       - name: Set failure type for install
