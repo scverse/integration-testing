@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   test:
-    name: GPU Tests
+    name: Integration test/ test (3.x rapids-singlecell)
     runs-on: "cirun-aws-gpu--${{ github.run_id }}"
     timeout-minutes: 30
     outputs:
