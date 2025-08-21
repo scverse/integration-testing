@@ -1,4 +1,4 @@
-name: GPU-CI
+name: rsc-integration-test
 
 on:
     schedule:
