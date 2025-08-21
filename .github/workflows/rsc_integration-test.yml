@@ -1,0 +1,131 @@
+name: GPU-CI
+
+on:
+    schedule:
+      - cron: "0 0 * * *"  # Run daily at midnight UTC
+    push:
+      branches: [main]
+    pull_request:
+      branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: GPU Tests
+    runs-on: "cirun-aws-gpu--${{ github.run_id }}"
+    timeout-minutes: 30
+    outputs:
+      failure_type: ${{ steps.export_failure.outputs.failure_type }}
+
+    defaults:
+      run:
+        shell: bash -el {0}
+        working-directory: rapids-singlecell
+
+    env:
+      GH_TOKEN: ${{ secrets.TOKEN_FOR_ISSUE_WRITE }}
+
+    steps:
+      - name: Checkout this repository (integration-testing)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Checkout rapids-singlecell
+        uses: actions/checkout@v4
+        with:
+          repository: scverse/rapids-singlecell
+          fetch-depth: 0
+          path: rapids-singlecell
+
+      - name: Nvidia SMI sanity check
+        run: nvidia-smi
+
+      - uses: mamba-org/setup-micromamba@v2
+        with:
+          environment-file: rapids-singlecell/ci/environment.yml
+          init-shell: >-
+            bash
+          post-cleanup: 'all'
+
+      - name: Install rapids-singlecell
+        id: install_pkg
+        run: >-
+          pip install -e .[test]
+          "scanpy @ git+https://github.com/scverse/scanpy.git"
+          "anndata @ git+https://github.com/scverse/anndata.git"
+
+      - name: Pip list
+        run: pip list
+
+      - name: Set failure type for install
+        if: failure()
+        run: |
+          echo "Installation failed for rapids-singlecell"
+          echo "failure_type=install" >> $GITHUB_ENV
+
+      - name: Run test
+        id: run_tests
+        run: pytest
+
+      - name: Set failure type for test
+        if: failure() && env.failure_type != 'install'
+        run: |
+          echo "Test failed for rapids-singlecell"
+          echo "failure_type=test" >> $GITHUB_ENV
+
+      - name: Export failure_type output
+        if: always()
+        id: export_failure
+        run: |
+          echo "failure_type=${{ env.failure_type }}" >> $GITHUB_OUTPUT
+
+  report-failure:
+    name: Report GPU CI Failure
+    needs: test
+    if: needs.test.result == 'failure' && github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      contents: read
+    env:
+      GH_TOKEN: ${{ secrets.TOKEN_FOR_ISSUE_WRITE }}
+    steps:
+      - name: Check for open failure issue
+        id: find_issue
+        run: |
+          FAILURE_TYPE="${{ needs.test.outputs.failure_type }}"
+          if [ -z "$FAILURE_TYPE" ]; then FAILURE_TYPE="test"; fi
+          echo "failure_type=$FAILURE_TYPE" >> $GITHUB_ENV
+          ISSUE_TITLE="GPU CI ${FAILURE_TYPE^} Failure"
+          echo "Checking for existing issue: $ISSUE_TITLE"
+          ISSUE_COUNT=$(gh issue list --repo scverse/rapids-singlecell --state open --search "$ISSUE_TITLE" --json number --jq 'length')
+          if [[ "$ISSUE_COUNT" -gt 0 ]]; then
+            echo "issue_exists=true" >> $GITHUB_ENV
+          else
+            echo "issue_exists=false" >> $GITHUB_ENV
+            echo "issue_title=$ISSUE_TITLE" >> $GITHUB_ENV
+          fi
+
+      - name: Report failure issue
+        if: env.issue_exists == 'false'
+        run: |
+          RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          ISSUE_BODY="The GPU CI failed on ${failure_type} for scverse/rapids-singlecell. Please review logs in [integration-testing run](${RUN_URL})."
+          gh issue create --repo scverse/rapids-singlecell --title "${{ env.issue_title }}" --body "$ISSUE_BODY"
+
+  keepalive-job:
+    name: Keepalive Workflow
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    steps:
+      - name: Re-enable workflow
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        shell: sh
+        run: |
+          gh api --verbose -X PUT "repos/${GITHUB_REPOSITORY}/actions/workflows/rsc_integration-test.yml/enable"
