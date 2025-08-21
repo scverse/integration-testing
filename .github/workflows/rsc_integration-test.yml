@@ -76,34 +76,16 @@ jobs:
         run: |
           echo "Test failed for rapids-singlecell"
           echo "failure_type=test" >> $GITHUB_ENV
-
-      - name: Export failure_type output
-        if: always()
-        id: export_failure
-        run: |
-          echo "failure_type=${{ env.failure_type }}" >> $GITHUB_OUTPUT
-
-  report-failure:
-    name: Report GPU CI Failure
-    needs: test
-    if: needs.test.result == 'failure' && github.event_name == 'schedule'
-    runs-on: ubuntu-latest
-    permissions:
-      issues: write
-      contents: read
-    env:
-      GH_TOKEN: ${{ secrets.TOKEN_FOR_ISSUE_WRITE }}
-    steps:
+    
       - name: Check for open failure issue
+        if: failure() && github.event_name == 'schedule'
         id: find_issue
         run: |
-          FAILURE_TYPE="${{ needs.test.outputs.failure_type }}"
-          if [ -z "$FAILURE_TYPE" ]; then FAILURE_TYPE="test"; fi
-          echo "failure_type=$FAILURE_TYPE" >> $GITHUB_ENV
-          ISSUE_TITLE="GPU CI ${FAILURE_TYPE^} Failure"
+          ISSUE_TITLE="Integration Testing CI ${failure_type^} Failure on python rapids_singlecell"
           echo "Checking for existing issue: $ISSUE_TITLE"
-          ISSUE_COUNT=$(gh issue list --repo scverse/rapids-singlecell --state open --search "$ISSUE_TITLE" --json number --jq 'length')
+          ISSUE_COUNT=$(gh issue list --repo scverse/rapids_singlecell --state open --search "${ISSUE_TITLE}" --json number --jq 'length')
           if [[ "$ISSUE_COUNT" -gt 0 ]]; then
+            echo "${failure_type^} failure issue already exists for today."
             echo "issue_exists=true" >> $GITHUB_ENV
           else
             echo "issue_exists=false" >> $GITHUB_ENV
@@ -111,11 +93,13 @@ jobs:
           fi
 
       - name: Report failure issue
-        if: env.issue_exists == 'false'
+        if: failure() && env.issue_exists == 'false' && github.event_name == 'schedule'
         run: |
           RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-          ISSUE_BODY="The GPU CI failed on ${failure_type} for scverse/rapids-singlecell. Please review logs in [integration-testing run](${RUN_URL})."
-          gh issue create --repo scverse/rapids-singlecell --title "${{ env.issue_title }}" --body "$ISSUE_BODY"
+          ISSUE_BODY="The daily CI failed on ${failure_type} for rapids_singlecell failed.  Please go to [the logs of the integration testing repo](${RUN_URL}) to review. @scverse/anndata"
+          gh issue create --repo scverse/rapids_singlecell --title "${{ env.issue_title }}" --body "${ISSUE_BODY}"
+
+
 
   keepalive-job:
     name: Keepalive Workflow
