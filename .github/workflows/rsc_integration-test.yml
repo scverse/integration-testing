@@ -23,7 +23,7 @@ jobs:
     defaults:
       run:
         shell: bash -el {0}
-        working-directory: rapids-singlecell
+        working-directory: rapids_singlecell
 
     env:
       GH_TOKEN: ${{ secrets.TOKEN_FOR_ISSUE_WRITE }}
@@ -37,9 +37,9 @@ jobs:
       - name: Checkout rapids-singlecell
         uses: actions/checkout@v4
         with:
-          repository: scverse/rapids-singlecell
+          repository: scverse/rapids_singlecell
           fetch-depth: 0
-          path: rapids-singlecell
+          path: rapids_singlecell
 
       - name: Nvidia SMI sanity check
         run: nvidia-smi
