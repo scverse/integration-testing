@@ -46,7 +46,7 @@ jobs:
 
       - uses: mamba-org/setup-micromamba@v2
         with:
-          environment-file: rapids-singlecell/ci/environment.yml
+          environment-file: rapids_singlecell/ci/environment.yml
           init-shell: >-
             bash
           post-cleanup: 'all'
