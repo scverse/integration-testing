@@ -1,4 +1,4 @@
-name: rsc-integration-test
+name: Integration test RSC
 
 on:
     schedule:
