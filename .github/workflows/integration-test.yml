@@ -29,7 +29,7 @@ jobs:
           - {name: "squidpy", extras: ""}
           - {name: "scvi-tools", extras: ""}
           - {name: "pertpy", extras: "de"}
-          - {name: "decoupler", extras: ""},
+          - {name: "decoupler", extras: ""}
           - {name: "SnapATAC2", extras: ""}
 
     defaults:
