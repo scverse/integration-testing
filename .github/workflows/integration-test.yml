@@ -53,7 +53,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: scverse/${{ matrix.package.name }}
-          with: "ig/unfiform_layout"
+          ref: "ig/unfiform_layout"
           fetch-depth: 0
           filter: blob:none
           path: ${{ matrix.package.name }}
