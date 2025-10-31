@@ -21,15 +21,16 @@ jobs:
         package:
           # extras should be a comma seperated list of strings, like `extras: "lazy,accelerated"`
           # The 'test' extra is always installed
-          - {name: "mudata", extras: ""}
-          - {name: "spatialdata", extras: ""}
-          - {name: "scirpy", extras: ""}
-          - {name: "muon", extras: ""}
-          - {name: "scanpy", extras: ""}
-          - {name: "squidpy", extras: ""}
-          - {name: "scvi-tools", extras: ""}
-          - {name: "pertpy", extras: "de"}
-          - {name: "decoupler", extras: ""}
+          - {name: "mudata", extras: "", use_lfs: false}
+          - {name: "spatialdata", extras: "", use_lfs: false}
+          - {name: "scirpy", extras: "", use_lfs: false}
+          - {name: "muon", extras: "", use_lfs: false}
+          - {name: "scanpy", extras: "", use_lfs: false}
+          - {name: "squidpy", extras: "", use_lfs: false}
+          - {name: "scvi-tools", extras: "", use_lfs: false}
+          - {name: "pertpy", extras: "de", use_lfs: false}
+          - {name: "decoupler", extras: "", use_lfs: false}
+          - {name: "SnapATAC2", extras: "", use_lfs: true}
 
     defaults:
       run:
@@ -42,19 +43,29 @@ jobs:
       GH_TOKEN: ${{ secrets.TOKEN_FOR_ISSUE_WRITE }}
 
     steps:
+      
+      - name: Create lfs dir
+        if: ${{ matrix.package.use_lfs }}
+        run: 'mkdir -p ${{ matrix.package.name }}'
+      
+      - uses: nschloe/action-cached-lfs-checkout@v1
+        if: ${{ matrix.package.use_lfs }}
+        with:
+          repository: scverse/${{ matrix.package.name }}
+          fetch-depth: 0
 
+      - uses: actions/checkout@v4
+        if: ${{ !matrix.package.use_lfs }}
+        with:
+          repository: scverse/${{ matrix.package.name }}
+          fetch-depth: 0
+          filter: blob:none
+      
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
           filter: blob:none
           path: integration-testing
-
-      - uses: actions/checkout@v4
-        with:
-          repository: scverse/${{ matrix.package.name }}
-          fetch-depth: 0
-          filter: blob:none
-          path: ${{ matrix.package.name }}
   
       - name: Install Python
         uses: actions/setup-python@v5
@@ -63,6 +74,10 @@ jobs:
 
       - name: Install UV
         uses: hynek/setup-cached-uv@v2
+      
+      # For snapatac2
+      - name: Install rust-cache
+        uses: Swatinem/rust-cache@v2
 
       - name: Install AnnData and scverse package
         run: |
@@ -70,8 +85,7 @@ jobs:
           if [ -n "${{ matrix.package.extras }}" ]; then
             EXTRAS="$EXTRAS,${{ matrix.package.extras }}"
           fi
-          uv pip install --compile --system ".[$EXTRAS]" git+https://github.com/scverse/anndata -c ../integration-testing/constraints.txt -v
-        working-directory: ${{ matrix.package.name }}
+          uv pip install --compile --system ".[$EXTRAS]" git+https://github.com/scverse/anndata -c ./integration-testing/constraints.txt -v
 
       - name: Set failure type for install
         if: failure()
@@ -85,7 +99,6 @@ jobs:
       - name: Run test
         run: |
           pytest
-        working-directory: ${{ matrix.package.name }}
 
       - name: Set failure type for test
         if: failure() && env.failure_type != 'install'
