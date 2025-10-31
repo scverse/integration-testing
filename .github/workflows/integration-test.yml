@@ -43,12 +43,6 @@ jobs:
       GH_TOKEN: ${{ secrets.TOKEN_FOR_ISSUE_WRITE }}
 
     steps:
-
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          filter: blob:none
-          path: integration-testing
       
       - name: Create lfs dir
         if: ${{ matrix.package.use_lfs }}
@@ -66,6 +60,12 @@ jobs:
           repository: scverse/${{ matrix.package.name }}
           fetch-depth: 0
           filter: blob:none
+      
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          filter: blob:none
+          path: integration-testing
   
       - name: Install Python
         uses: actions/setup-python@v5
