@@ -21,20 +21,21 @@ jobs:
         package:
           # extras should be a comma seperated list of strings, like `extras: "lazy,accelerated"`
           # The 'test' extra is always installed
-          - {name: "mudata", extras: ""}
-          - {name: "spatialdata", extras: ""}
-          - {name: "scirpy", extras: ""}
-          - {name: "muon", extras: ""}
-          - {name: "scanpy", extras: ""}
-          - {name: "squidpy", extras: ""}
-          - {name: "scvi-tools", extras: ""}
-          - {name: "pertpy", extras: "de"}
-          - {name: "decoupler", extras: ""}
-          - {name: "SnapATAC2", extras: ""}
+          - {name: "mudata", extras: "", use_lfs: false}
+          - {name: "spatialdata", extras: "", use_lfs: false}
+          - {name: "scirpy", extras: "", use_lfs: false}
+          - {name: "muon", extras: "", use_lfs: false}
+          - {name: "scanpy", extras: "", use_lfs: false}
+          - {name: "squidpy", extras: "", use_lfs: false}
+          - {name: "scvi-tools", extras: "", use_lfs: false}
+          - {name: "pertpy", extras: "de", use_lfs: false}
+          - {name: "decoupler", extras: "", use_lfs: false}
+          - {name: "SnapATAC2", extras: "", use_lfs: true}
 
     defaults:
       run:
         shell: bash -el {0}
+        working-directory: ${{ matrix.package.name }}
 
     runs-on: ubuntu-latest
   
@@ -48,14 +49,20 @@ jobs:
         with:
           fetch-depth: 0
           filter: blob:none
-          path: integration-testing
+          path: ../integration-testing
+      
+      - uses: nschloe/action-cached-lfs-checkout@v1
+        if: ${{ matrix.package.use_lfs }}
+        with:
+          repository: scverse/${{ matrix.package.name }}
+          fetch-depth: 0
 
       - uses: actions/checkout@v4
+        if: ${{ !matrix.package.use_lfs }}
         with:
           repository: scverse/${{ matrix.package.name }}
           fetch-depth: 0
           filter: blob:none
-          path: ${{ matrix.package.name }}
   
       - name: Install Python
         uses: actions/setup-python@v5
@@ -76,7 +83,7 @@ jobs:
             EXTRAS="$EXTRAS,${{ matrix.package.extras }}"
           fi
           uv pip install --compile --system ".[$EXTRAS]" git+https://github.com/scverse/anndata -c ../integration-testing/constraints.txt -v
-        working-directory: ${{ matrix.package.name }}
+        
 
       - name: Set failure type for install
         if: failure()
@@ -90,7 +97,6 @@ jobs:
       - name: Run test
         run: |
           pytest
-        working-directory: ${{ matrix.package.name }}
 
       - name: Set failure type for test
         if: failure() && env.failure_type != 'install'
