@@ -35,7 +35,6 @@ jobs:
     defaults:
       run:
         shell: bash -el {0}
-        working-directory: ${{ matrix.package.name }}
 
     runs-on: ubuntu-latest
   
@@ -49,7 +48,11 @@ jobs:
         with:
           fetch-depth: 0
           filter: blob:none
-          path: ../integration-testing
+          path: integration-testing
+      
+      - name: Create lfs dir
+        if: ${{ matrix.package.use_lfs }}
+        run: 'mkdir -p ${{ matrix.package.name }}'
       
       - uses: nschloe/action-cached-lfs-checkout@v1
         if: ${{ matrix.package.use_lfs }}
@@ -83,7 +86,6 @@ jobs:
             EXTRAS="$EXTRAS,${{ matrix.package.extras }}"
           fi
           uv pip install --compile --system ".[$EXTRAS]" git+https://github.com/scverse/anndata -c ../integration-testing/constraints.txt -v
-        
 
       - name: Set failure type for install
         if: failure()
