@@ -75,7 +75,7 @@ jobs:
           if [ -n "${{ matrix.package.extras }}" ]; then
             EXTRAS="$EXTRAS,${{ matrix.package.extras }}"
           fi
-          uv pip install --compile --system ".[$EXTRAS]" git+https://github.com/scverse/anndata -c ./integration-testing/constraints.txt -v
+          uv pip install --compile --system ".[$EXTRAS]" git+https://github.com/scverse/anndata -c ../integration-testing/constraints.txt -v
         working-directory: ${{ matrix.package.name }}
       
       - name: Set failure type for install
