@@ -73,13 +73,14 @@ jobs:
         run: |
           EXTRAS=""
           GROUP=""
-          if [ -n "${{ matrix.package.extras }}" ]; then
-            EXTRAS="${{ matrix.package.extras }}"
-          fi
           if uvx hatch env show --json | jq -e '.dependency_groups.test' > /dev/null; then
             GROUP="--group test"
           else
-            EXTRAS="test,${EXTRAS}"
+            if [ -n "${{ matrix.package.extras }}" ]; then
+              EXTRAS="test,${{ matrix.package.extras }}"
+            else
+              EXTRAS="test"
+            fi
           fi
           uv pip install --compile --system ".[$EXTRAS]" git+https://github.com/scverse/anndata -c ../integration-testing/constraints.txt $GROUP -v
         working-directory: ${{ matrix.package.name }}
