@@ -77,7 +77,7 @@ jobs:
             GROUP="--group test"
             if [ -n "${{ matrix.package.extras }}" ]; then
               EXTRAS="${{ matrix.package.extras }}"
-            else
+            fi
           else
             if [ -n "${{ matrix.package.extras }}" ]; then
               EXTRAS="test,${{ matrix.package.extras }}"
