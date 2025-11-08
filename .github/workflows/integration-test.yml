@@ -75,6 +75,9 @@ jobs:
           GROUP=""
           if uvx hatch env show --json | jq -e '.dependency_groups.test' > /dev/null; then
             GROUP="--group test"
+            if [ -n "${{ matrix.package.extras }}" ]; then
+              EXTRAS="${{ matrix.package.extras }}"
+            else
           else
             if [ -n "${{ matrix.package.extras }}" ]; then
               EXTRAS="test,${{ matrix.package.extras }}"
