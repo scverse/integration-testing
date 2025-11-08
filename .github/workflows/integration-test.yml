@@ -71,11 +71,17 @@ jobs:
 
       - name: Install AnnData and scverse package
         run: |
-          EXTRAS="test"
+          EXTRAS=""
+          GROUP=""
           if [ -n "${{ matrix.package.extras }}" ]; then
-            EXTRAS="$EXTRAS,${{ matrix.package.extras }}"
+            EXTRAS="${{ matrix.package.extras }}"
           fi
-          uv pip install --compile --system ".[$EXTRAS]" git+https://github.com/scverse/anndata -c ../integration-testing/constraints.txt -v
+          if uvx hatch env show --json | jq -e '.dependency_groups.test' > /dev/null; then
+            GROUP="--group test"
+          else
+            EXTRAS="test,${EXTRAS}"
+          fi
+          uv pip install --compile --system ".[$EXTRAS]" git+https://github.com/scverse/anndata -c ../integration-testing/constraints.txt $GROUP -v
         working-directory: ${{ matrix.package.name }}
       
       - name: Set failure type for install
