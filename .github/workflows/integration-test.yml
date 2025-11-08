@@ -73,7 +73,7 @@ jobs:
         run: |
           EXTRAS=""
           GROUP=""
-          if uvx hatch env show --json | jq -e '.dependency_groups.test' > /dev/null; then
+          if uvx hatch env show --json | jq -e '.dependency-groups.test' > /dev/null; then
             GROUP="--group test"
             if [ -n "${{ matrix.package.extras }}" ]; then
               EXTRAS="${{ matrix.package.extras }}"
