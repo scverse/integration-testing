@@ -69,11 +69,15 @@ jobs:
       - name: Install rust-cache
         uses: Swatinem/rust-cache@v2
 
+      - name: Install toml parsers
+        run: |
+          uv pip install --system toml-cli
+
       - name: Install AnnData and scverse package
         run: |
           EXTRAS=""
           GROUP=""
-          if uvx hatch env show --json | jq -e '.dependency-groups.test' > /dev/null; then
+          if toml get 'dependency-groups.test' --toml-path pyproject.toml > /dev/null; then
             GROUP="--group test"
             if [ -n "${{ matrix.package.extras }}" ]; then
               EXTRAS="${{ matrix.package.extras }}"
