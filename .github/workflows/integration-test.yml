@@ -102,6 +102,9 @@ jobs:
         run: uv pip freeze
 
       - name: Run test
+        env:
+          DISPLAY: :42
+          COLUMNS: 120
         run: |
           pytest
         working-directory: ${{ matrix.package.name }}
