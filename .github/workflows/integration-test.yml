@@ -92,7 +92,7 @@ jobs:
               EXTRAS="test"
             fi
           fi
-          uv pip install ${{ matrix.is_pre && '--prerelease allow' ||  '' }} --compile --system ".[$EXTRAS]" git+https://github.com/scverse/anndata -c ../integration-testing/constraints.txt --override ../integration-testing/overrides.txt $GROUP -v
+          uv pip install ${{ matrix.is_pre && '--prerelease allow' ||  '' }} --compile --system ".[$EXTRAS]" git+https://github.com/scverse/anndata -c ../integration-testing/constraints.txt ${{ matrix.is_pre && '--override ../integration-testing/overrides.txt' || ''}} $GROUP -v
         working-directory: ${{ matrix.package.name }}
       
       - name: Set failure type for install
