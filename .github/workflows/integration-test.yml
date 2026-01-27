@@ -18,6 +18,7 @@ jobs:
       fail-fast: false
       matrix:
         python: ["3.12", "3.14"]
+        is_pre: [true, false]
         package:
           # extras should be a comma seperated list of strings, like `extras: "lazy,accelerated"`
           # The 'test' extra is always installed
@@ -30,6 +31,9 @@ jobs:
           - {name: "scvi-tools", extras: ""}
           - {name: "pertpy", extras: "de"}
           - {name: "decoupler", extras: ""}
+          - {name: "SnapATAC2", extras: ""}
+        exclude:
+          - { python: 3.12, is_pre: true }
 
     defaults:
       run:
@@ -42,7 +46,7 @@ jobs:
       GH_TOKEN: ${{ secrets.TOKEN_FOR_ISSUE_WRITE }}
 
     steps:
-
+      
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -63,16 +67,34 @@ jobs:
 
       - name: Install UV
         uses: hynek/setup-cached-uv@v2
+      
+      # For snapatac2
+      - name: Install rust-cache
+        uses: Swatinem/rust-cache@v2
+
+      - name: Install toml parsers
+        run: |
+          uv pip install --system toml-cli
 
       - name: Install AnnData and scverse package
         run: |
-          EXTRAS="test"
-          if [ -n "${{ matrix.package.extras }}" ]; then
-            EXTRAS="$EXTRAS,${{ matrix.package.extras }}"
+          EXTRAS=""
+          GROUP=""
+          if toml get 'dependency-groups.test' --toml-path pyproject.toml > /dev/null; then
+            GROUP="--group test"
+            if [ -n "${{ matrix.package.extras }}" ]; then
+              EXTRAS="${{ matrix.package.extras }}"
+            fi
+          else
+            if [ -n "${{ matrix.package.extras }}" ]; then
+              EXTRAS="test,${{ matrix.package.extras }}"
+            else
+              EXTRAS="test"
+            fi
           fi
-          uv pip install --compile --system ".[$EXTRAS]" git+https://github.com/scverse/anndata -c ../integration-testing/constraints.txt -v
+          uv pip install ${{ matrix.is_pre && '--prerelease allow' ||  '' }} --compile --system ".[$EXTRAS]" git+https://github.com/scverse/anndata -c ../integration-testing/constraints.txt ${{ matrix.is_pre && '--override ../integration-testing/overrides.txt' || ''}} $GROUP -v
         working-directory: ${{ matrix.package.name }}
-
+      
       - name: Set failure type for install
         if: failure()
         run: |
@@ -83,6 +105,9 @@ jobs:
         run: uv pip freeze
 
       - name: Run test
+        env:
+          DISPLAY: :42
+          COLUMNS: 120
         run: |
           pytest
         working-directory: ${{ matrix.package.name }}
@@ -97,7 +122,7 @@ jobs:
         if: failure() && github.event_name == 'schedule'
         id: find_issue
         run: |
-          ISSUE_TITLE="Integration Testing CI ${failure_type^} Failure on python ${{ matrix.python }}"
+          ISSUE_TITLE="Integration Testing CI ${failure_type^} Failure on python ${{ matrix.python }}${{matrix.is_pre && ' with prerelease dependencies' || ''}}"
           echo "Checking for existing issue: $ISSUE_TITLE"
           ISSUE_COUNT=$(gh issue list --repo scverse/${{ matrix.package.name }} --state open --search "${ISSUE_TITLE}" --json number --jq 'length')
           if [[ "$ISSUE_COUNT" -gt 0 ]]; then

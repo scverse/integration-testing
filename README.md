@@ -19,6 +19,7 @@ The following packages are tested:
 - scvi-tools
 - pertpy
 - decoupler
+- SnapATAC2
 
 ## How it Works
 
