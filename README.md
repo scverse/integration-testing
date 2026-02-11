@@ -20,6 +20,7 @@ The following packages are tested:
 - pertpy
 - decoupler
 - SnapATAC2
+- rapids-singlecell
 
 ## How it Works
 
