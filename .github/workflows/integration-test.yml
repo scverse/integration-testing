@@ -32,6 +32,7 @@ jobs:
           - {name: "pertpy", extras: "de"}
           - {name: "decoupler", extras: ""}
           - {name: "SnapATAC2", extras: ""}
+          - {name: "rapids_singlecell", extras: "rapids12", gpu: true}
         exclude:
           - { python: 3.12, is_pre: true }
 
@@ -39,8 +40,8 @@ jobs:
       run:
         shell: bash -el {0}
 
-    runs-on: ubuntu-latest
-  
+    runs-on: ${{ matrix.package.gpu && format('cirun-aws-gpu--{0}', github.run_id) || 'ubuntu-latest' }}
+
     env:
       # This env variable is used by the `gh` CLI
       GH_TOKEN: ${{ secrets.TOKEN_FOR_ISSUE_WRITE }}
@@ -60,6 +61,10 @@ jobs:
           filter: blob:none
           path: ${{ matrix.package.name }}
   
+      - name: Nvidia SMI sanity check
+        if: matrix.package.gpu
+        run: nvidia-smi
+
       - name: Install Python
         uses: actions/setup-python@v5
         with:
@@ -77,6 +82,8 @@ jobs:
           uv pip install --system toml-cli
 
       - name: Install AnnData and scverse package
+        env:
+          UV_EXTRA_INDEX_URL: ${{ matrix.package.gpu && 'https://pypi.nvidia.com' || '' }}
         run: |
           EXTRAS=""
           GROUP=""
