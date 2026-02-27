@@ -42,10 +42,6 @@ jobs:
 
     runs-on: ${{ matrix.package.gpu && format('cirun-aws-gpu--{0}', github.run_id) || 'ubuntu-latest' }}
 
-    env:
-      # This env variable is used by the `gh` CLI
-      GH_TOKEN: ${{ secrets.TOKEN_FOR_ISSUE_WRITE }}
-
     steps:
       
       - uses: actions/checkout@v4
@@ -124,10 +120,20 @@ jobs:
         run: |
           echo "Test failed for ${{ matrix.package.name }}"
           echo "failure_type=test" >> $GITHUB_ENV
+
+      - name: Generate tokens
+        id: app-token
+        if: failure()
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ vars.ISSUE_CREATOR_APP_ID }}
+          private-key: ${{ secrets.ISSUE_CREATOR_PRIVATE_KEY }}
     
       - name: Check for open failure issue
-        if: failure() && github.event_name == 'schedule'
+        if: failure()
         id: find_issue
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           ISSUE_TITLE="Integration Testing CI ${failure_type^} Failure on python ${{ matrix.python }}${{matrix.is_pre && ' with prerelease dependencies' || ''}}"
           echo "Checking for existing issue: $ISSUE_TITLE"
@@ -142,6 +148,8 @@ jobs:
 
       - name: Report failure issue
         if: failure() && env.issue_exists == 'false' && github.event_name == 'schedule'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           ISSUE_BODY="The daily CI failed on ${failure_type} for ${{ matrix.package.name }} failed.  Please go to [the logs of the integration testing repo](${RUN_URL}) to review. @scverse/anndata"
