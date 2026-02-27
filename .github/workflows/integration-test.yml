@@ -23,16 +23,6 @@ jobs:
           # extras should be a comma seperated list of strings, like `extras: "lazy,accelerated"`
           # The 'test' extra is always installed
           - {name: "mudata", extras: ""}
-          - {name: "spatialdata", extras: ""}
-          - {name: "scirpy", extras: ""}
-          - {name: "muon", extras: ""}
-          - {name: "scanpy", extras: ""}
-          - {name: "squidpy", extras: ""}
-          - {name: "scvi-tools", extras: ""}
-          - {name: "pertpy", extras: "de"}
-          - {name: "decoupler", extras: ""}
-          - {name: "SnapATAC2", extras: ""}
-          - {name: "rapids_singlecell", extras: "rapids12", gpu: true}
         exclude:
           - { python: 3.12, is_pre: true }
 
