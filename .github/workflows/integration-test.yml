@@ -127,7 +127,6 @@ jobs:
         with:
           app-id: ${{ vars.ISSUE_CREATOR_APP_ID }}
           private-key: ${{ secrets.ISSUE_CREATOR_PRIVATE_KEY }}
-          installation-id: ${{ vars.ISSUE_CREATOR_INSTALLATION_ID }}
     
       - name: Check for open failure issue
         if: failure()
