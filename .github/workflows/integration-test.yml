@@ -114,6 +114,7 @@ jobs:
 
       - name: Generate tokens
         id: app-token
+        if: failure() && env.failure_type != 'install'
         uses: actions/create-github-app-token@v2
         with:
           app-id: ${{ vars.ISSUE_CREATOR_APP_ID }}
