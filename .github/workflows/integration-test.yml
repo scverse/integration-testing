@@ -23,6 +23,7 @@ jobs:
           # extras should be a comma seperated list of strings, like `extras: "lazy,accelerated"`
           # The 'test' extra is always installed
           - {name: "mudata", extras: ""}
+          - {name: "muon", extras: ""}
         exclude:
           - { python: 3.12, is_pre: true }
 
