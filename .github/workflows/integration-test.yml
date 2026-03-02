@@ -61,6 +61,12 @@ jobs:
         if: matrix.package.gpu
         run: nvidia-smi
 
+      - name: Add CUDA to PATH
+        if: matrix.package.gpu
+        run: |
+          echo "/usr/local/cuda/bin" >> $GITHUB_PATH
+          echo "LD_LIBRARY_PATH=/usr/local/cuda/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}" >> $GITHUB_ENV
+
       - name: Install Python
         uses: actions/setup-python@v5
         with:
