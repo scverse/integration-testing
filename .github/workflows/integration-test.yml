@@ -137,10 +137,9 @@ jobs:
     
       - name: Install GitHub CLI
         if: failure() && matrix.package.gpu
-        run: |
-          curl -fsSL https://github.com/cli/cli/releases/latest/download/gh_$(curl -s https://api.github.com/repos/cli/cli/releases/latest | grep -oP '"tag_name":\s*"v\K[^"]+')_linux_amd64.tar.gz -o gh.tar.gz
-          tar -xzf gh.tar.gz
-          echo "$(pwd)/$(tar -tzf gh.tar.gz | head -1)bin" >> $GITHUB_PATH
+        uses: sersoft-gmbh/setup-gh-cli-action@v2
+        with:
+          version: stable
 
       - name: Check for open failure issue
         if: failure()
