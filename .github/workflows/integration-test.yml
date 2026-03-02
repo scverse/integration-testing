@@ -135,6 +135,7 @@ jobs:
           app-id: ${{ vars.ISSUE_CREATOR_APP_ID }}
           private-key: ${{ secrets.ISSUE_CREATOR_PRIVATE_KEY }}
     
+      # https://github.com/scverse/gpu-ci-config/issues/4
       - name: Install GitHub CLI
         if: failure() && matrix.package.gpu
         uses: sersoft-gmbh/setup-gh-cli-action@v2
