@@ -61,6 +61,7 @@ jobs:
         if: matrix.package.gpu
         run: nvidia-smi
 
+      # https://github.com/scverse/gpu-ci-config/issues/5
       - name: Add CUDA to PATH
         if: matrix.package.gpu
         run: |
