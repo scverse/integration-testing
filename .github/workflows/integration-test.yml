@@ -32,7 +32,7 @@ jobs:
           - {name: "pertpy", extras: "de"}
           - {name: "decoupler", extras: ""}
           - {name: "SnapATAC2", extras: ""}
-          - {name: "rapids_singlecell", extras: "rapids12", gpu: true}
+          - {name: "rapids_singlecell", extras: "rapids-cu12", gpu: true}
         exclude:
           - { python: 3.12, is_pre: true }
 
@@ -60,6 +60,12 @@ jobs:
       - name: Nvidia SMI sanity check
         if: matrix.package.gpu
         run: nvidia-smi
+
+      - name: Add CUDA to PATH
+        if: matrix.package.gpu
+        run: |
+          echo "/usr/local/cuda/bin" >> $GITHUB_PATH
+          echo "LD_LIBRARY_PATH=/usr/local/cuda/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}" >> $GITHUB_ENV
 
       - name: Install Python
         uses: actions/setup-python@v5
@@ -129,6 +135,13 @@ jobs:
           app-id: ${{ vars.ISSUE_CREATOR_APP_ID }}
           private-key: ${{ secrets.ISSUE_CREATOR_PRIVATE_KEY }}
     
+      # https://github.com/scverse/gpu-ci-config/issues/4
+      - name: Install GitHub CLI
+        if: failure() && matrix.package.gpu
+        uses: sersoft-gmbh/setup-gh-cli-action@v2
+        with:
+          version: stable
+
       - name: Check for open failure issue
         if: failure()
         id: find_issue
