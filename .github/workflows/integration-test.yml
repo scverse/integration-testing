@@ -32,7 +32,7 @@ jobs:
           - {name: "pertpy", extras: "de"}
           - {name: "decoupler", extras: ""}
           - {name: "SnapATAC2", extras: ""}
-          - {name: "rapids_singlecell", extras: "rapids-cu12", gpu: true}
+          - {name: "rapids-singlecell", extras: "rapids-cu12", gpu: true}
         exclude:
           - { python: 3.12, is_pre: true }
 
