@@ -130,15 +130,15 @@ jobs:
 
       - name: Generate tokens
         id: app-token
-        if: failure()
+        if: always() && !cancelled() && github.event_name == 'schedule'
         uses: actions/create-github-app-token@v2
         with:
           app-id: ${{ vars.ISSUE_CREATOR_APP_ID }}
           private-key: ${{ secrets.ISSUE_CREATOR_PRIVATE_KEY }}
-    
+
       # https://github.com/scverse/gpu-ci-config/issues/4
       - name: Install GitHub CLI
-        if: failure() && matrix.package.gpu
+        if: (!cancelled()) && matrix.package.gpu && github.event_name == 'schedule'
         uses: sersoft-gmbh/setup-gh-cli-action@v2
         with:
           version: stable
@@ -186,6 +186,21 @@ jobs:
           RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           ISSUE_BODY="The daily CI failed on ${failure_type} for ${{ matrix.package.name }} failed.  Please go to [the logs of the integration testing repo](${RUN_URL}) to review. @scverse/anndata"
           gh issue create --repo scverse/${{ matrix.package.name }} --title "${{ env.issue_title }}" --body "${ISSUE_BODY}"
+
+      - name: Close resolved failure issue
+        if: success() && github.event_name == 'schedule'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          for FAILURE_TYPE in install test; do
+            ISSUE_TITLE="Integration Testing CI ${FAILURE_TYPE^} Failure on python ${{ matrix.python }}${{matrix.is_pre && ' with prerelease dependencies' || ''}}"
+            ISSUE=$(gh issue list --repo scverse/${{ matrix.package.name }} --state open --search "${ISSUE_TITLE}" --json number --jq '.[0] // empty')
+            if [[ -n "$ISSUE" ]]; then
+              ISSUE_NUMBER=$(echo "$ISSUE" | jq -r '.number')
+              echo "Tests passing — closing issue #$ISSUE_NUMBER: $ISSUE_TITLE"
+              gh issue close "$ISSUE_NUMBER" --repo scverse/${{ matrix.package.name }} --comment "Closing issue as tests are now passing."
+            fi
+          done
 
   keepalive-job:
     name: Keepalive Workflow
