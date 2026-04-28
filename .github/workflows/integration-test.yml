@@ -138,7 +138,7 @@ jobs:
 
       # https://github.com/scverse/gpu-ci-config/issues/4
       - name: Install GitHub CLI
-        if: (!cancelled()) && matrix.package.gpu && github.event_name == 'schedule'
+        if: failure() && matrix.package.gpu
         uses: sersoft-gmbh/setup-gh-cli-action@v2
         with:
           version: stable
