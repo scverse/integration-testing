@@ -151,10 +151,28 @@ jobs:
         run: |
           ISSUE_TITLE="Integration Testing CI ${failure_type^} Failure on python ${{ matrix.python }}${{matrix.is_pre && ' with prerelease dependencies' || ''}}"
           echo "Checking for existing issue: $ISSUE_TITLE"
-          ISSUE_COUNT=$(gh issue list --repo scverse/${{ matrix.package.name }} --state open --search "${ISSUE_TITLE}" --json number --jq 'length')
-          if [[ "$ISSUE_COUNT" -gt 0 ]]; then
-            echo "${failure_type^} failure issue already exists for today."
-            echo "issue_exists=true" >> $GITHUB_ENV
+          ISSUE=$(gh issue list --repo scverse/${{ matrix.package.name }} --state open --search "${ISSUE_TITLE}" --json number,createdAt --jq '.[0] // empty')
+          if [[ -n "$ISSUE" ]]; then
+            ISSUE_NUMBER=$(echo "$ISSUE" | jq -r '.number')
+            IS_PRE="${{ matrix.is_pre }}"
+            if [[ "$IS_PRE" == "true" ]]; then
+              echo "${failure_type^} prerelease failure issue already exists, leaving it open."
+              echo "issue_exists=true" >> $GITHUB_ENV
+            else
+              CREATED_AT=$(echo "$ISSUE" | jq -r '.createdAt')
+              CREATED_EPOCH=$(date -d "$CREATED_AT" +%s)
+              NOW_EPOCH=$(date +%s)
+              AGE_DAYS=$(( (NOW_EPOCH - CREATED_EPOCH) / 86400 ))
+              if [[ "$AGE_DAYS" -gt 7 ]]; then
+                echo "Issue #$ISSUE_NUMBER is $AGE_DAYS days old, closing it to open a fresh one."
+                gh issue close "$ISSUE_NUMBER" --repo scverse/${{ matrix.package.name }} --comment "Closing stale issue after $AGE_DAYS days. A fresh issue will be opened."
+                echo "issue_exists=false" >> $GITHUB_ENV
+                echo "issue_title=$ISSUE_TITLE" >> $GITHUB_ENV
+              else
+                echo "${failure_type^} failure issue already exists and is less than a week old."
+                echo "issue_exists=true" >> $GITHUB_ENV
+              fi
+            fi
           else
             echo "issue_exists=false" >> $GITHUB_ENV
             echo "issue_title=$ISSUE_TITLE" >> $GITHUB_ENV
