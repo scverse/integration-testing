@@ -130,12 +130,12 @@ jobs:
 
       - name: Generate tokens
         id: app-token
-        if: failure()
+        if: always()
         uses: actions/create-github-app-token@v2
         with:
           app-id: ${{ vars.ISSUE_CREATOR_APP_ID }}
           private-key: ${{ secrets.ISSUE_CREATOR_PRIVATE_KEY }}
-    
+
       # https://github.com/scverse/gpu-ci-config/issues/4
       - name: Install GitHub CLI
         if: failure() && matrix.package.gpu
@@ -150,24 +150,62 @@ jobs:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           ISSUE_TITLE="Integration Testing CI ${failure_type^} Failure on python ${{ matrix.python }}${{matrix.is_pre && ' with prerelease dependencies' || ''}}"
+          echo "issue_title=$ISSUE_TITLE" >> $GITHUB_ENV
           echo "Checking for existing issue: $ISSUE_TITLE"
-          ISSUE_COUNT=$(gh issue list --repo scverse/${{ matrix.package.name }} --state open --search "${ISSUE_TITLE}" --json number --jq 'length')
-          if [[ "$ISSUE_COUNT" -gt 0 ]]; then
-            echo "${failure_type^} failure issue already exists for today."
-            echo "issue_exists=true" >> $GITHUB_ENV
+          ISSUE=$(gh issue list --repo scverse/${{ matrix.package.name }} --state open --search "${ISSUE_TITLE}" --json number,createdAt --jq '.[0] // empty')
+          if [[ -n "$ISSUE" ]]; then
+            ISSUE_NUMBER=$(echo "$ISSUE" | jq -r '.number')
+            CREATED_AT=$(echo "$ISSUE" | jq -r '.createdAt')
+            CREATED_EPOCH=$(date -d "$CREATED_AT" +%s)
+            NOW_EPOCH=$(date +%s)
+            AGE_DAYS=$(( (NOW_EPOCH - CREATED_EPOCH) / 86400 ))
+            echo "Found issue #$ISSUE_NUMBER, age: $AGE_DAYS days."
+            echo "issue_exists=true" >> $GITHUB_OUTPUT
+            echo "issue_number=$ISSUE_NUMBER" >> $GITHUB_OUTPUT
+            echo "issue_age_days=$AGE_DAYS" >> $GITHUB_OUTPUT
           else
-            echo "issue_exists=false" >> $GITHUB_ENV
-            echo "issue_title=$ISSUE_TITLE" >> $GITHUB_ENV
+            echo "No open failure issue found."
+            echo "issue_exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Close stale failure issue
+        if: failure() && steps.find_issue.outputs.issue_exists == 'true' && !matrix.is_pre && github.event_name == 'schedule'
+        id: close_stale
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          if [[ "${{ steps.find_issue.outputs.issue_age_days }}" -gt 7 ]]; then
+            echo "Issue #${{ steps.find_issue.outputs.issue_number }} is ${{ steps.find_issue.outputs.issue_age_days }} days old, closing it to open a fresh one."
+            gh issue close "${{ steps.find_issue.outputs.issue_number }}" --repo scverse/${{ matrix.package.name }} --comment "Closing stale issue after ${{ steps.find_issue.outputs.issue_age_days }} days. A fresh issue will be opened."
+            echo "issue_closed=true" >> $GITHUB_OUTPUT
+          else
+            echo "Issue #${{ steps.find_issue.outputs.issue_number }} is less than a week old, leaving it open."
+            echo "issue_closed=false" >> $GITHUB_OUTPUT
           fi
 
       - name: Report failure issue
-        if: failure() && env.issue_exists == 'false' && github.event_name == 'schedule'
+        if: failure() && (steps.find_issue.outputs.issue_exists == 'false' || steps.close_stale.outputs.issue_closed == 'true') && github.event_name == 'schedule'
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           ISSUE_BODY="The daily CI failed on ${failure_type} for ${{ matrix.package.name }} failed.  Please go to [the logs of the integration testing repo](${RUN_URL}) to review. @scverse/anndata"
           gh issue create --repo scverse/${{ matrix.package.name }} --title "${{ env.issue_title }}" --body "${ISSUE_BODY}"
+
+      - name: Close resolved failure issue
+        if: success() && github.event_name == 'schedule'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          for FAILURE_TYPE in install test; do
+            ISSUE_TITLE="Integration Testing CI ${FAILURE_TYPE^} Failure on python ${{ matrix.python }}${{matrix.is_pre && ' with prerelease dependencies' || ''}}"
+            ISSUE=$(gh issue list --repo scverse/${{ matrix.package.name }} --state open --search "${ISSUE_TITLE}" --json number --jq '.[0] // empty')
+            if [[ -n "$ISSUE" ]]; then
+              ISSUE_NUMBER=$(echo "$ISSUE" | jq -r '.number')
+              echo "Tests passing — closing issue #$ISSUE_NUMBER: $ISSUE_TITLE"
+              gh issue close "$ISSUE_NUMBER" --repo scverse/${{ matrix.package.name }} --comment "Closing issue as tests are now passing."
+            fi
+          done
 
   keepalive-job:
     name: Keepalive Workflow
