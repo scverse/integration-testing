@@ -130,7 +130,7 @@ jobs:
 
       - name: Generate tokens
         id: app-token
-        if: always() && !cancelled() && github.event_name == 'schedule'
+        if: always()
         uses: actions/create-github-app-token@v2
         with:
           app-id: ${{ vars.ISSUE_CREATOR_APP_ID }}
