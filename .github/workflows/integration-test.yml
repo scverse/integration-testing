@@ -150,36 +150,41 @@ jobs:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           ISSUE_TITLE="Integration Testing CI ${failure_type^} Failure on python ${{ matrix.python }}${{matrix.is_pre && ' with prerelease dependencies' || ''}}"
+          echo "issue_title=$ISSUE_TITLE" >> $GITHUB_ENV
           echo "Checking for existing issue: $ISSUE_TITLE"
           ISSUE=$(gh issue list --repo scverse/${{ matrix.package.name }} --state open --search "${ISSUE_TITLE}" --json number,createdAt --jq '.[0] // empty')
           if [[ -n "$ISSUE" ]]; then
             ISSUE_NUMBER=$(echo "$ISSUE" | jq -r '.number')
-            IS_PRE="${{ matrix.is_pre }}"
-            if [[ "$IS_PRE" == "true" ]]; then
-              echo "${failure_type^} prerelease failure issue already exists, leaving it open."
-              echo "issue_exists=true" >> $GITHUB_ENV
-            else
-              CREATED_AT=$(echo "$ISSUE" | jq -r '.createdAt')
-              CREATED_EPOCH=$(date -d "$CREATED_AT" +%s)
-              NOW_EPOCH=$(date +%s)
-              AGE_DAYS=$(( (NOW_EPOCH - CREATED_EPOCH) / 86400 ))
-              if [[ "$AGE_DAYS" -gt 7 ]]; then
-                echo "Issue #$ISSUE_NUMBER is $AGE_DAYS days old, closing it to open a fresh one."
-                gh issue close "$ISSUE_NUMBER" --repo scverse/${{ matrix.package.name }} --comment "Closing stale issue after $AGE_DAYS days. A fresh issue will be opened."
-                echo "issue_exists=false" >> $GITHUB_ENV
-                echo "issue_title=$ISSUE_TITLE" >> $GITHUB_ENV
-              else
-                echo "${failure_type^} failure issue already exists and is less than a week old."
-                echo "issue_exists=true" >> $GITHUB_ENV
-              fi
-            fi
+            CREATED_AT=$(echo "$ISSUE" | jq -r '.createdAt')
+            CREATED_EPOCH=$(date -d "$CREATED_AT" +%s)
+            NOW_EPOCH=$(date +%s)
+            AGE_DAYS=$(( (NOW_EPOCH - CREATED_EPOCH) / 86400 ))
+            echo "Found issue #$ISSUE_NUMBER, age: $AGE_DAYS days."
+            echo "issue_exists=true" >> $GITHUB_OUTPUT
+            echo "issue_number=$ISSUE_NUMBER" >> $GITHUB_OUTPUT
+            echo "issue_age_days=$AGE_DAYS" >> $GITHUB_OUTPUT
           else
-            echo "issue_exists=false" >> $GITHUB_ENV
-            echo "issue_title=$ISSUE_TITLE" >> $GITHUB_ENV
+            echo "No open failure issue found."
+            echo "issue_exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Close stale failure issue
+        if: failure() && steps.find_issue.outputs.issue_exists == 'true' && !matrix.is_pre && github.event_name == 'schedule'
+        id: close_stale
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          if [[ "${{ steps.find_issue.outputs.issue_age_days }}" -gt 7 ]]; then
+            echo "Issue #${{ steps.find_issue.outputs.issue_number }} is ${{ steps.find_issue.outputs.issue_age_days }} days old, closing it to open a fresh one."
+            gh issue close "${{ steps.find_issue.outputs.issue_number }}" --repo scverse/${{ matrix.package.name }} --comment "Closing stale issue after ${{ steps.find_issue.outputs.issue_age_days }} days. A fresh issue will be opened."
+            echo "issue_closed=true" >> $GITHUB_OUTPUT
+          else
+            echo "Issue #${{ steps.find_issue.outputs.issue_number }} is less than a week old, leaving it open."
+            echo "issue_closed=false" >> $GITHUB_OUTPUT
           fi
 
       - name: Report failure issue
-        if: failure() && env.issue_exists == 'false' && github.event_name == 'schedule'
+        if: failure() && (steps.find_issue.outputs.issue_exists == 'false' || steps.close_stale.outputs.issue_closed == 'true') && github.event_name == 'schedule'
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
