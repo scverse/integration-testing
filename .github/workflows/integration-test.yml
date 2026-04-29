@@ -203,6 +203,8 @@ jobs:
             if [[ -n "$ISSUE" ]]; then
               ISSUE_NUMBER=$(echo "$ISSUE" | jq -r '.number')
               echo "Tests passing — closing issue #$ISSUE_NUMBER: $ISSUE_TITLE"
+              # https://github.com/cli/cli/issues/8374 got graphql error about comment, could be a bug.
+              # TODO: Add a comment for the closed issue.
               gh issue close "$ISSUE_NUMBER" --repo scverse/${{ matrix.package.name }}
             fi
           done
