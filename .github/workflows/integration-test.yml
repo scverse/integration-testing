@@ -176,6 +176,8 @@ jobs:
         run: |
           if [[ "${{ steps.find_issue.outputs.issue_age_days }}" -gt 7 ]]; then
             echo "Issue #${{ steps.find_issue.outputs.issue_number }} is ${{ steps.find_issue.outputs.issue_age_days }} days old, closing it to open a fresh one."
+            # https://github.com/cli/cli/issues/8374 got graphql error about comment, could be a bug.
+            # TODO: Add a comment for the closed issue.
             gh issue close "${{ steps.find_issue.outputs.issue_number }}" --repo scverse/${{ matrix.package.name }}
             echo "issue_closed=true" >> $GITHUB_OUTPUT
           else
