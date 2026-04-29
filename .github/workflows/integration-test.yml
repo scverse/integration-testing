@@ -138,7 +138,7 @@ jobs:
 
       # https://github.com/scverse/gpu-ci-config/issues/4
       - name: Install GitHub CLI
-        if: failure() && matrix.package.gpu
+        if: matrix.package.gpu
         uses: sersoft-gmbh/setup-gh-cli-action@v2
         with:
           version: stable
@@ -176,7 +176,7 @@ jobs:
         run: |
           if [[ "${{ steps.find_issue.outputs.issue_age_days }}" -gt 7 ]]; then
             echo "Issue #${{ steps.find_issue.outputs.issue_number }} is ${{ steps.find_issue.outputs.issue_age_days }} days old, closing it to open a fresh one."
-            gh issue close "${{ steps.find_issue.outputs.issue_number }}" --repo scverse/${{ matrix.package.name }} --comment "Closing stale issue after ${{ steps.find_issue.outputs.issue_age_days }} days. A fresh issue will be opened."
+            gh issue close "${{ steps.find_issue.outputs.issue_number }}" --repo scverse/${{ matrix.package.name }}
             echo "issue_closed=true" >> $GITHUB_OUTPUT
           else
             echo "Issue #${{ steps.find_issue.outputs.issue_number }} is less than a week old, leaving it open."
@@ -203,7 +203,7 @@ jobs:
             if [[ -n "$ISSUE" ]]; then
               ISSUE_NUMBER=$(echo "$ISSUE" | jq -r '.number')
               echo "Tests passing — closing issue #$ISSUE_NUMBER: $ISSUE_TITLE"
-              gh issue close "$ISSUE_NUMBER" --repo scverse/${{ matrix.package.name }} --comment "Closing issue as tests are now passing."
+              gh issue close "$ISSUE_NUMBER" --repo scverse/${{ matrix.package.name }}
             fi
           done
 
