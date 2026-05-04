@@ -153,7 +153,7 @@ jobs:
           ISSUE_TITLE="Integration Testing CI ${failure_type^} Failure on python ${{ matrix.python }}${{matrix.is_pre && ' with prerelease dependencies' || ''}}"
           echo "issue_title=$ISSUE_TITLE" >> $GITHUB_ENV
           echo "Checking for existing issue: $ISSUE_TITLE"
-          ISSUE=$(gh issue list --repo scverse/${{ matrix.package.name }} --state open --search "${ISSUE_TITLE}" --json number,createdAt --jq '.[0] // empty')
+          ISSUE=$(gh issue list --repo scverse/${{ matrix.package.name }} --state open --search "${ISSUE_TITLE}" --json number,createdAt,title | jq --arg title "$ISSUE_TITLE" '[.[] | select(.title == $title)] | .[0] // empty')
           if [[ -n "$ISSUE" ]]; then
             ISSUE_NUMBER=$(echo "$ISSUE" | jq -r '.number')
             CREATED_AT=$(echo "$ISSUE" | jq -r '.createdAt')
@@ -202,7 +202,7 @@ jobs:
         run: |
           for FAILURE_TYPE in install test; do
             ISSUE_TITLE="Integration Testing CI ${FAILURE_TYPE^} Failure on python ${{ matrix.python }}${{matrix.is_pre && ' with prerelease dependencies' || ''}}"
-            ISSUE=$(gh issue list --repo scverse/${{ matrix.package.name }} --state open --search "${ISSUE_TITLE}" --json number --jq '.[0] // empty')
+            ISSUE=$(gh issue list --repo scverse/${{ matrix.package.name }} --state open --search "${ISSUE_TITLE}" --json number,title | jq --arg title "$ISSUE_TITLE" '[.[] | select(.title == $title)] | .[0] // empty')
             if [[ -n "$ISSUE" ]]; then
               ISSUE_NUMBER=$(echo "$ISSUE" | jq -r '.number')
               echo "Tests passing — closing issue #$ISSUE_NUMBER: $ISSUE_TITLE"
