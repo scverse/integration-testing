@@ -26,7 +26,7 @@ jobs:
           - {name: "spatialdata", extras: ""}
           - {name: "scirpy", extras: ""}
           - {name: "muon", extras: ""}
-          - {name: "scanpy", extras: ""}
+          - {name: "scanpy", extras: "scanpy2"}
           - {name: "squidpy", extras: ""}
           - {name: "scvi-tools", extras: ""}
           - {name: "pertpy", extras: "de"}
@@ -34,23 +34,23 @@ jobs:
           - {name: "SnapATAC2", extras: ""}
           - {name: "rapids-singlecell", extras: "rapids-cu13", gpu: true}
         exclude:
-          - { python: 3.12, is_pre: true }
+          - { python: "3.12", is_pre: true }
 
     defaults:
       run:
-        shell: bash -el {0}
+        shell: bash -leo pipefail {0}
 
     runs-on: ${{ matrix.package.gpu && format('cirun-aws-gpu--{0}', github.run_id) || 'ubuntu-latest' }}
 
     steps:
       
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
           filter: blob:none
           path: integration-testing
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           repository: scverse/${{ matrix.package.name }}
           fetch-depth: 0
@@ -69,7 +69,7 @@ jobs:
           echo "LD_LIBRARY_PATH=/usr/local/cuda/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}" >> $GITHUB_ENV
 
       - name: Install Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python }}
 
@@ -131,7 +131,7 @@ jobs:
       - name: Generate tokens
         id: app-token
         if: always()
-        uses: actions/create-github-app-token@v2
+        uses: actions/create-github-app-token@v3
         with:
           app-id: ${{ vars.ISSUE_CREATOR_APP_ID }}
           private-key: ${{ secrets.ISSUE_CREATOR_PRIVATE_KEY }}
@@ -140,7 +140,7 @@ jobs:
       # https://github.com/scverse/gpu-ci-config/issues/4
       - name: Install GitHub CLI
         if: matrix.package.gpu
-        uses: sersoft-gmbh/setup-gh-cli-action@v2
+        uses: sersoft-gmbh/setup-gh-cli-action@v3
         with:
           version: stable
 
