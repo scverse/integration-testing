@@ -131,7 +131,7 @@ jobs:
       - name: Generate tokens
         id: app-token
         if: always()
-        uses: actions/create-github-app-token@v2
+        uses: actions/create-github-app-token@v3
         with:
           app-id: ${{ vars.ISSUE_CREATOR_APP_ID }}
           private-key: ${{ secrets.ISSUE_CREATOR_PRIVATE_KEY }}
