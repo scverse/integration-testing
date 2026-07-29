@@ -28,7 +28,7 @@ jobs:
           - {name: "muon", extras: ""}
           - {name: "scanpy", extras: "scanpy2"}
           - {name: "squidpy", extras: ""}
-          - {name: "scvi-tools", extras: ""}
+          - {name: "scvi-tools", extras: "optional"}
           - {name: "pertpy", extras: "de"}
           - {name: "decoupler", extras: ""}
           - {name: "SnapATAC2", extras: ""}
