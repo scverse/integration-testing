@@ -29,7 +29,7 @@ jobs:
           - {name: "scanpy", extras: "scanpy2"}
           - {name: "squidpy", extras: ""}
           - {name: "scvi-tools", extras: "optional"}
-          - {name: "pertpy", extras: "de"}
+          - {name: "pertpy", extras: "de,tcoda"}
           - {name: "decoupler", extras: ""}
           - {name: "SnapATAC2", extras: ""}
           - {name: "rapids-singlecell", extras: "rapids-cu13", gpu: true}
