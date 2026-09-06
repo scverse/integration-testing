@@ -21,6 +21,8 @@ The following packages are tested:
 - decoupler
 - SnapATAC2
 - rapids-singlecell
+- liana-py
+- PyDESeq2
 
 ## How it Works
 
