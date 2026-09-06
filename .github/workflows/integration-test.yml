@@ -33,6 +33,8 @@ jobs:
           - {name: "decoupler", extras: ""}
           - {name: "SnapATAC2", extras: ""}
           - {name: "rapids-singlecell", extras: "rapids-cu13", gpu: true}
+          - {name: "liana-py", extras: "extras"}
+          - {name: "PyDESeq2", extras: ""}
         exclude:
           - { python: "3.12", is_pre: true }
 
