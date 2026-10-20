@@ -17,7 +17,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python: ["3.13", "3.15"]
+        python: ["3.13", "3.14"]
         is_pre: [true, false]
         package:
           # extras should be a comma seperated list of strings, like `extras: "lazy,accelerated"`
