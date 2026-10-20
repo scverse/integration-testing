@@ -17,7 +17,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python: ["3.12", "3.14"]
+        python: ["3.13", "3.15"]
         is_pre: [true, false]
         package:
           # extras should be a comma seperated list of strings, like `extras: "lazy,accelerated"`
@@ -36,7 +36,7 @@ jobs:
           - {name: "liana", extras: "extras"}
           - {name: "PyDESeq2", extras: ""}
         exclude:
-          - { python: "3.12", is_pre: true }
+          - { python: "3.13", is_pre: true }
 
     defaults:
       run:
