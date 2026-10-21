@@ -23,12 +23,14 @@ The following packages are tested:
 - rapids-singlecell
 - liana
 - PyDESeq2
+- anndataR
 
 ## How it Works
 
 - Each package is checked out and tested in isolation.
 - AnnData (from the main branch) is installed with test dependencies.
 - Constraints from [`constraints.txt`](constraints.txt) are applied to avoid known incompatibilities.
+- anndataR is tested in [`integration-test-r.yml`](.github/workflows/integration-test-r.yml), where [`overrides-r.txt`](overrides-r.txt) makes reticulate install AnnData from the main branch.
 - Failures are reported automatically, and issues are opened if the daily scheduled run fails.
 
 See the workflow file at [`.github/workflows/integration-test.yml`](.github/workflows/integration-test.yml) for details.
