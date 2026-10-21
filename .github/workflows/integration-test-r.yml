@@ -80,9 +80,21 @@ jobs:
 
       - name: Run test
         shell: Rscript {0}
+        env:
+          # fail instead of skipping the Python tests when the Python environment can't be set up
+          ANNDATAR_TEST_REQUIRE_PYTHON: "true"
         run: |
           reticulate::py_require(python_version = "${{ matrix.python }}")
-          testthat::test_local(reporter = "check")
+          tryCatch(
+            testthat::test_local(reporter = "check"),
+            finally = {
+              # check the anndata that the tests actually imported
+              metadata <- reticulate::import("importlib.metadata")
+              direct_url <- metadata$distribution("anndata")$read_text("direct_url.json")
+              cat("Tested against anndata", metadata$version("anndata"), "from", direct_url, "\n")
+              stopifnot(isTRUE(grepl("github.com/scverse/anndata", direct_url)))
+            }
+          )
         working-directory: ${{ matrix.package.name }}
 
       - name: Set failure type for test
