@@ -23,6 +23,7 @@ The following packages are tested:
 - rapids-singlecell
 - liana
 - PyDESeq2
+- anndataR
 
 ## How it Works
 

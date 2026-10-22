@@ -1,0 +1,115 @@
+name: Integration test (R)
+
+on:
+  schedule:
+    - cron: "0 0 * * *"  # Run daily at midnight UTC
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.14"]
+        package:
+          - {name: "anndataR"}
+
+    runs-on: ubuntu-latest
+
+    env:
+      RETICULATE_PYTHON: managed
+      UV_CONSTRAINT: ${{ github.workspace }}/integration-testing/constraints.txt
+      UV_OVERRIDE: ${{ github.workspace }}/integration-testing/overrides-r.txt
+
+    steps:
+
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          filter: blob:none
+          path: integration-testing
+
+      - uses: actions/checkout@v7
+        with:
+          repository: scverse/${{ matrix.package.name }}
+          fetch-depth: 0
+          filter: blob:none
+          path: ${{ matrix.package.name }}
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get -y install hdf5-tools libsz2 libaec-dev
+
+      - name: Install R and Bioconductor
+        uses: grimbough/bioc-actions/setup-bioc@v1
+        with:
+          bioc-version: devel
+
+      - name: Install R dependencies
+        uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          working-directory: ${{ matrix.package.name }}
+
+      - name: Install UV
+        uses: hynek/setup-cached-uv@v2
+
+      - name: Check that reticulate installs AnnData from main
+        shell: Rscript {0}
+        run: |
+          reticulate::py_require("anndata", python_version = "${{ matrix.python }}")
+          print(reticulate::py_config())
+          direct_url <- reticulate::import("importlib.metadata")$distribution("anndata")$read_text("direct_url.json")
+          stopifnot(isTRUE(grepl("github.com/scverse/anndata", direct_url)))
+
+      - name: Set failure type for install
+        if: failure()
+        run: |
+          echo "Installation failed for ${{ matrix.package.name }}"
+          echo "failure_type=install" >> $GITHUB_ENV
+
+      - name: Run test
+        shell: Rscript {0}
+        env:
+          # fail instead of skipping the Python tests when the Python environment can't be set up
+          ANNDATAR_TEST_REQUIRE_PYTHON: "true"
+        run: |
+          reticulate::py_require(python_version = "${{ matrix.python }}")
+          tryCatch(
+            testthat::test_local(reporter = "check"),
+            finally = {
+              # check the anndata that the tests actually imported
+              metadata <- reticulate::import("importlib.metadata")
+              direct_url <- metadata$distribution("anndata")$read_text("direct_url.json")
+              cat("Tested against anndata", metadata$version("anndata"), "from", direct_url, "\n")
+              stopifnot(isTRUE(grepl("github.com/scverse/anndata", direct_url)))
+            }
+          )
+        working-directory: ${{ matrix.package.name }}
+
+      - name: Set failure type for test
+        if: failure() && env.failure_type != 'install'
+        run: |
+          echo "Test failed for ${{ matrix.package.name }}"
+          echo "failure_type=test" >> $GITHUB_ENV
+
+      - name: Manage failure issue
+        if: always()
+        uses: ./integration-testing/.github/actions/failure-issue
+        with:
+          package: ${{ matrix.package.name }}
+          python: ${{ matrix.python }}
+          status: ${{ job.status }}
+          failure-type: ${{ env.failure_type }}
+          app-id: ${{ vars.ISSUE_CREATOR_APP_ID }}
+          private-key: ${{ secrets.ISSUE_CREATOR_PRIVATE_KEY }}
