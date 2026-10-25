@@ -77,6 +77,8 @@ jobs:
 
       - name: Install UV
         uses: hynek/setup-cached-uv@v2
+        with:                                                                                                                                                                                     
+          uv-cache-path: ${{ runner.temp }}/uv-cache 
       
       # For snapatac2
       - name: Install rust-cache
